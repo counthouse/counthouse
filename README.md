@@ -1,0 +1,26 @@
+# Counthouse
+
+A multi-tenant back office for appointment-based businesses, built vertical-first: veterinary clinics are the first
+vertical. One monorepo with a Spring Boot API, a Next.js backoffice and one OpenAPI contract that both sides are
+generated from.
+
+The core is domain-neutral: tenants, users, providers, services, schedule, appointments and customers. Features for
+one kind of business live in their own module and are built only for a real customer.
+
+## Status
+
+In development. Nothing is built or deployed yet. Progress is tracked in GitHub milestones and issues.
+
+## What it is not
+
+- Not a SaaS. The code is tenant-aware, and production runs one tenant.
+- Not open source. The code is published for review; see [LICENSE](LICENSE).
+
+## How it is built
+
+Written with AI coding agents under the author's direction and review. Design decisions, specs and reviews are the
+author's.
+
+## Contributing
+
+Conventions are in [CONTRIBUTING.md](CONTRIBUTING.md).
