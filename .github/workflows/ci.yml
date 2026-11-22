@@ -1,0 +1,169 @@
+name: CI
+
+on:
+  pull_request:
+    # `edited` covers a change of base branch, which the default types miss.
+    types: [opened, synchronize, reopened, edited]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  # The workflow runs on every change, so required checks always report.
+  # A job skipped by its `if:` reports success; a workflow skipped by a
+  # path filter would leave its required checks pending forever.
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      api: ${{ steps.diff.outputs.api }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - id: diff
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if [ "$EVENT" != "pull_request" ]; then
+            echo "api=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          changed=$(git diff --name-only "$BASE...$HEAD")
+          echo "$changed"
+          if echo "$changed" | grep -qE '^(apps/api|contract|\.github)/'; then
+            echo "api=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "api=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  api:
+    needs: changes
+    if: needs.changes.outputs.api == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: apps/api
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+          cache-dependency-path: apps/api/pom.xml
+      - run: ./mvnw -B -ntp verify
+      - if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: api-test-reports
+          path: apps/api/target/surefire-reports/
+          retention-days: 7
+
+  # Applies the base branch's migrations, then this branch's, so Flyway
+  # validates the history the way a deploy does: a changed, renamed or
+  # deleted migration, or a new one older than the latest applied, fails.
+  # The validation rules are set on the command line, which overrides any
+  # Flyway configuration the branch itself adds.
+  migrations:
+    needs: changes
+    if: github.event_name == 'pull_request' && needs.changes.outputs.api == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 2s --health-timeout 5s --health-retries 15
+    defaults:
+      run:
+        working-directory: apps/api
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+          cache-dependency-path: apps/api/pom.xml
+      - name: Migrate from the base branch to this branch
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          git worktree add --detach "$RUNNER_TEMP/base" "$BASE"
+          migrate() {
+            ./mvnw -B -ntp org.flywaydb:flyway-maven-plugin:migrate \
+              -Dflyway.url=jdbc:postgresql://localhost:5432/postgres \
+              -Dflyway.user=postgres -Dflyway.password=postgres \
+              -Dflyway.locations="filesystem:$1" -Dflyway.failOnMissingLocations=true \
+              -Dflyway.validateOnMigrate=true -Dflyway.validateMigrationNaming=true \
+              -Dflyway.outOfOrder=false -Dflyway.ignoreMigrationPatterns='*:future'
+          }
+          migrate "$RUNNER_TEMP/base/apps/api/src/main/resources/db/migration"
+          migrate src/main/resources/db/migration
+
+  secrets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Scan new commits with gitleaks
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.sha }}
+        run: |
+          if [ "$EVENT" = "pull_request" ]; then
+            from="$BASE" to="$HEAD"
+          else
+            from="$BEFORE" to="$AFTER"
+          fi
+          # gitleaks reports no leaks for a range it cannot resolve.
+          for sha in "$from" "$to"; do
+            git rev-parse --verify --quiet "$sha^{commit}" > /dev/null || { echo "Unknown commit $sha"; exit 1; }
+          done
+          # Only .git is mounted, so allowlists in the checked-out tree are not
+          # read; -m scans what merge commits add.
+          docker run --rm --user "$(id -u):$(id -g)" -v "$PWD/.git:/repo:ro" \
+            ghcr.io/gitleaks/gitleaks:v8.30.1@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f \
+            git /repo --log-opts="-m $from..$to" --ignore-gitleaks-allow --redact --verbose --no-banner
+
+  # The only required check: it fails when any job failed or was cancelled,
+  # and passes when jobs succeeded or were skipped as not affected. New jobs
+  # are added to `needs` here, not to the branch ruleset.
+  ci-passed:
+    if: always()
+    needs: [changes, api, migrations, secrets]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "Job results: $RESULTS"
+          case " $RESULTS " in
+            *" failure "* | *" cancelled "*) exit 1 ;;
+          esac

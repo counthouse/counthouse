@@ -31,6 +31,9 @@ the code are added together with that part.
   checks the constraint's name in the error.
 - Rules the database cannot check, such as a valid time zone or a rule across modules, live in the owning module's
   service, each with a test.
+- A migration is frozen once it is on `main`: change the schema with a new migration whose version is higher than
+  every existing one. CI applies the migrations of `main` and then those of the branch with Flyway, and fails on a
+  changed, renamed, deleted, duplicate, out-of-order or misnamed migration.
 
 ## Decision records
 
