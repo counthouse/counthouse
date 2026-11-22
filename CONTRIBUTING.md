@@ -27,8 +27,10 @@ the code are added together with that part.
 
 ## Database
 
-- The database enforces data rules through named constraints. Each constraint has a test that sees it reject bad
-  data and checks the constraint's name in the error.
+- Rules on a table's own data are named constraints. Each constraint has a test that sees it reject bad data and
+  checks the constraint's name in the error.
+- Rules the database cannot check, such as a valid time zone or a rule across modules, live in the owning module's
+  service, each with a test.
 
 ## Decision records
 
