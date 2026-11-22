@@ -73,10 +73,9 @@ jobs:
           retention-days: 7
 
   # Applies the base branch's migrations, then this branch's, so Flyway
-  # validates the history the way a deploy does: a changed, renamed or
-  # deleted migration, or a new one older than the latest applied, fails.
-  # The validation rules are set on the command line, which overrides any
-  # Flyway configuration the branch itself adds.
+  # validates the existing history: a changed, renamed, deleted, duplicate,
+  # out-of-order or misnamed migration fails. The rules are set on the
+  # command line, which overrides any Flyway configuration the branch adds.
   migrations:
     needs: changes
     if: github.event_name == 'pull_request' && needs.changes.outputs.api == 'true'
