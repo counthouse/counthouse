@@ -14,6 +14,11 @@ Planned; each folder is created when its work starts.
 - `docs/`: decision records, architecture and operations.
 - `infra/`: deployment configuration.
 
+## Build and test
+
+- `apps/api`: `cd apps/api && ./mvnw -B verify`. Docker must be running: the tests start PostgreSQL 18 through
+  Testcontainers.
+
 ## Working rules
 
 - Every rule is enforced by a test or a CI check. Run them before proposing a change.

@@ -25,6 +25,13 @@ the code are added together with that part.
 - Every rule is enforced by a test or a CI check, not only by a sentence in a document.
 - A new test is seen failing once, by breaking the code it protects, before it is trusted.
 
+## Database
+
+- Rules on a table's own data are named constraints. Each constraint has a test that sees it reject bad data and
+  checks the constraint's name in the error.
+- Rules the database cannot check, such as a valid time zone or a rule across modules, live in the owning module's
+  service, each with a test.
+
 ## Decision records
 
 - Decisions with real trade-offs get a record in `docs/adr/`, stating the decision, the alternatives and the
