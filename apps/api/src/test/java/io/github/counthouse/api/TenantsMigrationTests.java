@@ -35,7 +35,7 @@ class TenantsMigrationTests {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"", "   "})
+    @ValueSource(strings = {"", "   ", "\t", "\n"})
     void blankNameIsRejected(String name) {
         assertRejected(name, "Europe/Berlin", "es", "tenants_name_check");
     }
@@ -47,7 +47,7 @@ class TenantsMigrationTests {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"", "   "})
+    @ValueSource(strings = {"", "   ", "\t", "\n"})
     void blankTimeZoneIsRejected(String timeZone) {
         assertRejected("Demo clinic", timeZone, "es", "tenants_time_zone_check");
     }
