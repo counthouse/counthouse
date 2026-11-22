@@ -16,8 +16,9 @@ the code are added together with that part.
 ## Branches and commits
 
 - Branches are named `<type>/<issue>-<slug>`, for example `feat/12-appointment-search`.
-- Commits follow Conventional Commits with the app as scope: `feat(api): ...`, `fix(backoffice): ...`. Scopes: `api`,
-  `backoffice`, `site`, `contract`, `infra`, `docs`.
+- Commits follow Conventional Commits. The scope names the app or area: `feat(api): ...`, `fix(backoffice): ...`.
+  Scopes: `api`, `backoffice`, `site`, `contract`, `infra`, `docs`. Changes to the whole repository, such as CI or
+  root files, have no scope: `ci: ...`, `chore: ...`.
 - Commits are signed.
 
 ## Tests
