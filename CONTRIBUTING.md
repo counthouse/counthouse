@@ -16,8 +16,9 @@ the code are added together with that part.
 ## Branches and commits
 
 - Branches are named `<type>/<issue>-<slug>`, for example `feat/12-appointment-search`.
-- Commits follow Conventional Commits with the app as scope: `feat(api): ...`, `fix(backoffice): ...`. Scopes: `api`,
-  `backoffice`, `site`, `contract`, `infra`, `docs`.
+- Commits follow Conventional Commits. The scope names the app or area: `feat(api): ...`, `fix(backoffice): ...`.
+  Scopes: `api`, `backoffice`, `site`, `contract`, `infra`, `docs`. Changes to the whole repository, such as CI or
+  root files, have no scope: `ci: ...`, `chore: ...`.
 - Commits are signed.
 
 ## Tests
@@ -31,6 +32,9 @@ the code are added together with that part.
   checks the constraint's name in the error.
 - Rules the database cannot check, such as a valid time zone or a rule across modules, live in the owning module's
   service, each with a test.
+- A migration is frozen once it is on `main`: change the schema with a new migration whose version is higher than
+  every existing one. CI applies the migrations of `main` and then those of the branch with Flyway, and fails on a
+  changed, renamed, deleted, duplicate, out-of-order or misnamed migration.
 
 ## Decision records
 
