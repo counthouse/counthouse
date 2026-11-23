@@ -11,16 +11,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.jdbc.core.simple.JdbcClient;
-import org.springframework.transaction.annotation.Transactional;
 
 @Import(TestcontainersConfiguration.class)
 @SpringBootTest
-@Transactional
 class TenantsMigrationTests {
 
+    // As the migrator: the API's role can only read its own tenant.
     @Autowired
-    JdbcClient jdbc;
+    TestcontainersConfiguration.MigratorDatabase migrator;
 
     @Test
     void tenantIdsAreUuidV7() {
@@ -64,10 +62,14 @@ class TenantsMigrationTests {
     }
 
     private UUID insertTenant(String name, String timeZone, String locale) {
-        return jdbc.sql("""
+        return migrator.jdbc()
+                .sql("""
                 insert into tenants (name, time_zone, locale)
                 values (?, ?, ?)
                 returning id
-                """).params(name, timeZone, locale).query(UUID.class).single();
+                """)
+                .params(name, timeZone, locale)
+                .query(UUID.class)
+                .single();
     }
 }

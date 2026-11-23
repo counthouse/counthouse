@@ -86,6 +86,7 @@ jobs:
         image: postgres:18
         env:
           POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: counthouse
         ports: ["5432:5432"]
         options: >-
           --health-cmd pg_isready --health-interval 2s --health-timeout 5s --health-retries 15
@@ -103,6 +104,12 @@ jobs:
           java-version: "25"
           cache: maven
           cache-dependency-path: apps/api/pom.xml
+      # The same roles as the tests: migrations run as the migrator, which owns
+      # the database but is not a superuser.
+      - name: Create the database roles
+        env:
+          POSTGRES: ${{ job.services.postgres.id }}
+        run: docker exec -i "$POSTGRES" psql -v ON_ERROR_STOP=1 -U postgres -d counthouse < src/test/resources/db/roles.sql
       - name: Migrate from the base branch to this branch
         env:
           BASE: ${{ github.event.pull_request.base.sha }}
@@ -110,8 +117,8 @@ jobs:
           git worktree add --detach "$RUNNER_TEMP/base" "$BASE"
           migrate() {
             ./mvnw -B -ntp org.flywaydb:flyway-maven-plugin:migrate \
-              -Dflyway.url=jdbc:postgresql://localhost:5432/postgres \
-              -Dflyway.user=postgres -Dflyway.password=postgres \
+              -Dflyway.url=jdbc:postgresql://localhost:5432/counthouse \
+              -Dflyway.user=counthouse_migrator -Dflyway.password=migrator \
               -Dflyway.locations="filesystem:$1" -Dflyway.failOnMissingLocations=true \
               -Dflyway.validateOnMigrate=true -Dflyway.validateMigrationNaming=true \
               -Dflyway.outOfOrder=false -Dflyway.ignoreMigrationPatterns='*:future'
