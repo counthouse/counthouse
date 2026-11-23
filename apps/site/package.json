@@ -1,6 +1,7 @@
 {
   "name": "@counthouse/site",
   "private": true,
+  "description": "Static website of the first business that uses Counthouse. Built for that business; not part of the product.",
   "engines": {
     "node": ">=26"
   },
