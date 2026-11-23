@@ -49,6 +49,28 @@ the code are added together with that part.
   every existing one. CI applies the migrations of `main` and then those of the branch with Flyway, and fails on a
   changed, renamed, deleted, duplicate, out-of-order or misnamed migration.
 
+### Tenant isolation
+
+Tenant data is isolated by PostgreSQL row-level security (ADR 0001). `TenantCatalogTests` checks each rule over every
+application schema, so a new table that breaks one fails the build. Each rule also runs on a test-only schema of
+tables that each break it, so a rule that can no longer fail is caught too.
+
+- Every table has a `tenant_id` column, enables and forces row-level security, and has exactly one policy, permissive,
+  for all commands, comparing `tenant_id` with `current_tenant_id()`. The exceptions are `tenants` (enabled, not
+  forced, readable only as the current tenant) and `flyway_schema_history`
+  (`everyTableIsIsolatedByExactlyOneTenantPolicy`, `tenantsAreReadableOnlyAsTheCurrentTenant`).
+- Every primary key is one `uuid` column (`everyPrimaryKeyIsOneUuidColumn`).
+- Unique keys and exclusion constraints on tenant tables, other than the primary key, include `tenant_id`
+  (`uniqueAndExclusionKeysOnTenantTablesIncludeTheTenant`).
+- Foreign keys between tenant tables include `tenant_id`; a parent has a unique `(tenant_id, id)` for them to
+  reference (`foreignKeysBetweenTenantTablesIncludeTheTenant`).
+- The migration that creates a table grants `counthouse_app` only what the API needs, never `TRUNCATE`, `REFERENCES`
+  or `TRIGGER` (`apiRoleHasNoPrivilegeThatGetsAroundThePolicies`).
+- Views set `security_invoker`; materialized views are not used (`everyViewRunsWithTheCallersRights`).
+- `counthouse_app` cannot create objects or temporary tables (`apiRoleCannotCreateObjectsOrTemporaryTables`).
+- The API stores no large objects: row-level security does not cover them.
+- Data access runs inside `TenantScope`: the transaction manager refuses a transaction without a tenant.
+
 ## Decision records
 
 - Decisions with real trade-offs get a record in `docs/adr/`, stating the decision, the alternatives and the
