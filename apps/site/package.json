@@ -1,0 +1,31 @@
+{
+  "name": "@counthouse/site",
+  "private": true,
+  "engines": {
+    "node": ">=26"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "lint": "eslint --max-warnings 0",
+    "typecheck": "next typegen && tsc --noEmit"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.3.5",
+    "@types/node": "26.6.6",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "eslint": "9.39.5",
+    "eslint-config-next": "16.4.6",
+    "tailwindcss": "4.3.5",
+    "typescript": "6.0.3"
+  },
+  "dependencies": {
+    "@nicolassancho/ui": "5.1.1",
+    "next": "16.4.6",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "tailwind-merge": "3.7.1",
+    "tailwind-variants": "3.3.1"
+  }
+}

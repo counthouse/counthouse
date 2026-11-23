@@ -1,6 +1,9 @@
 {
   "name": "counthouse",
   "private": true,
+  "workspaces": [
+    "apps/site"
+  ],
   "scripts": {
     "format": "prettier --write .",
     "format:check": "prettier --check .",
