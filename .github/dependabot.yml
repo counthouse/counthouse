@@ -11,6 +11,9 @@ updates:
     groups:
       maven:
         update-types: [minor, patch]
+        # A Spotless update can change the formatter and reformat code, so it
+        # comes in its own pull request instead of failing the whole group.
+        exclude-patterns: ["*spotless*"]
 
   - package-ecosystem: github-actions
     directory: /
@@ -23,3 +26,12 @@ updates:
     groups:
       actions:
         update-types: [minor, patch]
+
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: build
+    cooldown:
+      default-days: 7
