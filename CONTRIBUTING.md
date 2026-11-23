@@ -56,3 +56,26 @@ the code are added together with that part.
 - A record stays `Proposed` until its code ships and may be edited until then. Once `Accepted` it is frozen: only its
   status changes, and a changed decision gets a new record. A formatter update may change a record's whitespace;
   that is not a change to the record.
+
+## Agents
+
+Coding agents follow the same rules. Claude Code reads `.claude/settings.json` only when it starts at the
+repository root, and in an interactive session runs its hooks only after the folder is trusted. The rules and hooks
+give early feedback; CI and the branch ruleset on `main` stay the guard.
+
+- **Permission rules.** Claude Code asks before `git push`, `gh api`, `gh pr merge`, `gh release` and `gh repo`, and
+  before editing anything under `.github/` or `.claude/`, or `LICENSE`. Command patterns are not a security
+  boundary: a differently written command, such as `git -C <dir> push`, does not match. The ruleset blocks force
+  pushes and changes to `main` without a pull request.
+- **Frozen migrations.** A hook blocks an edit to a migration that exists on `origin/main`. Edits made through the
+  shell, renames and a stale `origin/main` are not seen, and a crash of the hook lets the edit through; the
+  `migrations` job checks every pull request.
+- **API build at the end of a turn.** When a session has edited `apps/api`, a hook runs
+  `./mvnw -B -o test-compile` as the agent stops and reports formatting failures and compiler warnings and errors.
+  A failing build is reported once; the hook stays quiet until the next edit to `apps/api`. Edits made through the
+  shell are not seen; the `api` job runs the same checks and the tests.
+- The hooks are tested with `npm run test:hooks`, which the `agent-hooks` job runs.
+
+Some areas are reviewed line by line, whoever wrote the change: exclusion constraints and their concurrency tests,
+slot generation, row-level security policies and tenant scope, migrations, token handling, CSRF protection, tenant
+provisioning and authorization.
