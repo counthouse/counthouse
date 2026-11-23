@@ -1,0 +1,4 @@
+@import "tailwindcss";
+@import "@nicolassancho/ui/styles/theme.css";
+/* npm workspaces install the library in the repository's root node_modules. */
+@source "../../../../node_modules/@nicolassancho/ui/dist";

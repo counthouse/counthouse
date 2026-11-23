@@ -2,14 +2,14 @@
 
 A multi-tenant back office for appointment-based businesses, built vertical-first: veterinary clinics are the first
 vertical. One monorepo with a Spring Boot API, a Next.js backoffice and one OpenAPI contract that both sides are
-generated from.
+generated from, plus the static website of the first business that uses it.
 
 The core is domain-neutral: tenants, users, providers, services, schedule, appointments and customers. Features for
 one kind of business live in their own module and are built only for a real customer.
 
 ## Status
 
-In development. Nothing is built or deployed yet. Progress is tracked in GitHub milestones and issues.
+In development and not deployed yet. Progress is tracked in GitHub milestones and issues.
 
 ## What it is not
 

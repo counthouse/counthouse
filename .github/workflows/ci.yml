@@ -23,6 +23,7 @@ jobs:
     timeout-minutes: 5
     outputs:
       api: ${{ steps.diff.outputs.api }}
+      site: ${{ steps.diff.outputs.site }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -36,6 +37,7 @@ jobs:
         run: |
           if [ "$EVENT" != "pull_request" ]; then
             echo "api=true" >> "$GITHUB_OUTPUT"
+            echo "site=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           changed=$(git diff --name-only "$BASE...$HEAD")
@@ -44,6 +46,12 @@ jobs:
             echo "api=true" >> "$GITHUB_OUTPUT"
           else
             echo "api=false" >> "$GITHUB_OUTPUT"
+          fi
+          # The site's dependencies are in the root package files.
+          if echo "$changed" | grep -qE '^(apps/site/|\.github/|package\.json$|package-lock\.json$|\.nvmrc$)'; then
+            echo "site=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "site=false" >> "$GITHUB_OUTPUT"
           fi
 
   api:
@@ -126,6 +134,31 @@ jobs:
           migrate "$RUNNER_TEMP/base/apps/api/src/main/resources/db/migration"
           migrate src/main/resources/db/migration
 
+  site:
+    needs: changes
+    if: needs.changes.outputs.site == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      # The build needs no install scripts; skipping them keeps dependency
+      # code from running in CI.
+      - run: npm ci --ignore-scripts
+      - run: npm run lint -w apps/site
+      - run: npm run typecheck -w apps/site
+      - run: npm run build -w apps/site
+      # The build passes even when Tailwind does not scan the design system
+      # (a wrong `@source` path), so check that one of its classes was
+      # generated. `rounded-button` is used only inside the library.
+      - name: Check the design system's classes are in the CSS
+        run: grep -rqF 'rounded-button' apps/site/out/_next/static --include='*.css'
+
   secrets:
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -171,8 +204,8 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       # Prettier needs no install scripts; skipping them keeps dependency code
-      # from running in CI.
-      - run: npm ci --ignore-scripts
+      # from running in CI. The workspaces' dependencies are not needed either.
+      - run: npm ci --ignore-scripts --workspaces=false
       - run: npm run format:check
 
   # Runs the Claude Code hooks in .claude/hooks against temporary git
@@ -197,7 +230,7 @@ jobs:
   # are added to `needs` here, not to the branch ruleset.
   ci-passed:
     if: always()
-    needs: [changes, api, migrations, secrets, format, agent-hooks]
+    needs: [changes, api, migrations, site, secrets, format, agent-hooks]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
