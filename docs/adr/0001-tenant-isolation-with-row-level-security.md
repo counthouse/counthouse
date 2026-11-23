@@ -69,3 +69,7 @@ flowchart LR
 - Executor and `@Async` threads do not inherit the scope, so asynchronous work fails closed until it enters the scope
   again. Event listeners that start their own transaction need a task decorator that carries the tenant.
 - The API stores no large objects, which row-level security does not cover.
+- Backups run as a superuser or a role with `BYPASSRLS`. `pg_dump` as the migrator fails on forced tables, because
+  the owner is subject to their policies.
+- A query outside a transaction has no tenant. On a tenant table it raises once a row is checked, but when no row
+  matches it returns empty, so a missing tenant can look like "not found". It never returns another tenant's rows.
