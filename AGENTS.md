@@ -17,7 +17,8 @@ Planned; each folder is created when its work starts.
 ## Build and test
 
 - `apps/api`: `cd apps/api && ./mvnw -B verify`. Docker must be running: the tests start PostgreSQL 18 through
-  Testcontainers. Format Java first with `./mvnw spotless:apply`; the build fails on unformatted code.
+  Testcontainers, with the production role split: Flyway runs as `counthouse_migrator`, the API as
+  `counthouse_app`. Format Java first with `./mvnw spotless:apply`; the build fails on unformatted code.
 - Other files: `npm ci` once, then `npm run format` (or `npm run format:check`) at the root, on the Node version
   in `.nvmrc`.
 - Claude Code hooks in `.claude/hooks`: `npm run test:hooks` at the root.
