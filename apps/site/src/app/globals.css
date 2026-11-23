@@ -2,3 +2,11 @@
 @import "@nicolassancho/ui/styles/theme.css";
 /* npm workspaces install the library in the repository's root node_modules. */
 @source "../../../../node_modules/@nicolassancho/ui/dist";
+
+/* On phones the WhatsApp link is fixed to the bottom of the screen (site-header.tsx). Scrolling
+   to a focused element stops above it, so the link never covers what has focus (WCAG 2.4.11). */
+@media (width < 48rem) {
+  html {
+    scroll-padding-bottom: 5rem;
+  }
+}

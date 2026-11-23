@@ -5,6 +5,9 @@ import type { Metadata } from "next";
 import type { CSSProperties } from "react";
 
 import { brand } from "@/brand";
+import { SiteFooter } from "@/components/site-footer";
+import { SiteHeader } from "@/components/site-header";
+import { clinic } from "@/content/clinic";
 
 // Runs when the layout module loads: a brand that `validateBrand` rejects stops `next build`.
 const failures = validateBrand(brand);
@@ -17,14 +20,16 @@ if (failures.length > 0) {
 const brandStyle = brandToCssVariables(brand) as CSSProperties;
 
 export const metadata: Metadata = {
-  title: "Clínica veterinaria",
+  title: clinic.fullName,
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="es" style={brandStyle}>
-      <body className="bg-surface font-sans text-neutral-900 antialiased">
+      <body className="flex min-h-dvh flex-col bg-surface font-sans text-neutral-900 antialiased">
+        <SiteHeader clinic={clinic} />
         {children}
+        <SiteFooter clinic={clinic} />
       </body>
     </html>
   );
