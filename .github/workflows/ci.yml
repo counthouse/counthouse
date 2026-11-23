@@ -61,7 +61,7 @@ jobs:
       - uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
         with:
           distribution: temurin
-          java-version: '25'
+          java-version: "25"
           cache: maven
           cache-dependency-path: apps/api/pom.xml
       - run: ./mvnw -B -ntp verify
@@ -86,7 +86,7 @@ jobs:
         image: postgres:18
         env:
           POSTGRES_PASSWORD: postgres
-        ports: ['5432:5432']
+        ports: ["5432:5432"]
         options: >-
           --health-cmd pg_isready --health-interval 2s --health-timeout 5s --health-retries 15
     defaults:
@@ -100,7 +100,7 @@ jobs:
       - uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
         with:
           distribution: temurin
-          java-version: '25'
+          java-version: "25"
           cache: maven
           cache-dependency-path: apps/api/pom.xml
       - name: Migrate from the base branch to this branch
@@ -150,12 +150,30 @@ jobs:
             ghcr.io/gitleaks/gitleaks:v8.30.1@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f \
             git /repo --log-opts="-m $from..$to" --ignore-gitleaks-allow --redact --verbose --no-banner
 
+  # Prettier formats every file it has a parser for; Java is checked by the
+  # `api` job through Spotless. Runs on every change, like `secrets`.
+  format:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      # Prettier needs no install scripts; skipping them keeps dependency code
+      # from running in CI.
+      - run: npm ci --ignore-scripts
+      - run: npm run format:check
+
   # The only required check: it fails when any job failed or was cancelled,
   # and passes when jobs succeeded or were skipped as not affected. New jobs
   # are added to `needs` here, not to the branch ruleset.
   ci-passed:
     if: always()
-    needs: [changes, api, migrations, secrets]
+    needs: [changes, api, migrations, secrets, format]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

@@ -90,6 +90,39 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
       </plugin>
+      <plugin>
+        <groupId>com.diffplug.spotless</groupId>
+        <artifactId>spotless-maven-plugin</artifactId>
+        <version>3.11.0</version>
+        <configuration>
+          <java>
+            <!-- No version: the formatter is updated together with the plugin. -->
+            <palantirJavaFormat/>
+          </java>
+        </configuration>
+        <executions>
+          <execution>
+            <!-- validate, so unformatted code fails before compiling and testing;
+                 spring-boot:run stops on it too. -->
+            <phase>validate</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <compilerArgs>
+            <!-- -processing: javac warns when a configured annotation processor
+                 finds nothing to do, which says nothing about the code. -->
+            <arg>-Xlint:all,-processing</arg>
+            <arg>-Werror</arg>
+          </compilerArgs>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
 

@@ -59,8 +59,8 @@ class TenantsMigrationTests {
 
     private void assertRejected(String name, String timeZone, String locale, String constraint) {
         assertThatThrownBy(() -> insertTenant(name, timeZone, locale))
-            .isInstanceOf(DataIntegrityViolationException.class)
-            .hasMessageContaining(constraint);
+                .isInstanceOf(DataIntegrityViolationException.class)
+                .hasMessageContaining(constraint);
     }
 
     private UUID insertTenant(String name, String timeZone, String locale) {
@@ -68,10 +68,6 @@ class TenantsMigrationTests {
                 insert into tenants (name, time_zone, locale)
                 values (?, ?, ?)
                 returning id
-                """)
-            .params(name, timeZone, locale)
-            .query(UUID.class)
-            .single();
+                """).params(name, timeZone, locale).query(UUID.class).single();
     }
-
 }

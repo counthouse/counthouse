@@ -21,6 +21,19 @@ the code are added together with that part.
   root files, have no scope: `ci: ...`, `chore: ...`.
 - Commits are signed.
 
+## Formatting and warnings
+
+- One formatter per language, run by its own build and checked by CI.
+- Java is formatted with palantir-java-format through Spotless: `cd apps/api && ./mvnw spotless:apply`. The check
+  runs at the start of the build lifecycle, so `compile`, `verify` and `spring-boot:run` stop on unformatted code. The
+  palantir-java-format IntelliJ plugin formats in the IDE; its formatter version can differ, and the build's check
+  decides.
+- Every other file Prettier can parse is formatted with Prettier and its default options: `npm run format` at the
+  root. The Node version is in `.nvmrc`.
+- Java compiles with `-Xlint:all,-processing -Werror`: every compiler warning fails the build. `processing` is
+  excluded because it only reports annotation processors that find nothing to do. A dependency update that adds a
+  deprecation fails its own pull request and is fixed there.
+
 ## Tests
 
 - Every rule is enforced by a test or a CI check, not only by a sentence in a document.
@@ -41,4 +54,5 @@ the code are added together with that part.
 - Decisions with real trade-offs get a record in `docs/adr/`, stating the decision, the alternatives and the
   trade-offs.
 - A record stays `Proposed` until its code ships and may be edited until then. Once `Accepted` it is frozen: only its
-  status changes, and a changed decision gets a new record.
+  status changes, and a changed decision gets a new record. A formatter update may change a record's whitespace;
+  that is not a change to the record.
