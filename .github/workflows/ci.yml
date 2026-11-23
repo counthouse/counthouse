@@ -168,12 +168,29 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm run format:check
 
+  # Runs the Claude Code hooks in .claude/hooks against temporary git
+  # repositories. The hooks give agents early feedback; the jobs above stay
+  # the guard. Runs on every change, like `format`.
+  agent-hooks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      # The hooks and their tests use only Node's standard library, so there
+      # is nothing to install.
+      - run: npm run test:hooks
+
   # The only required check: it fails when any job failed or was cancelled,
   # and passes when jobs succeeded or were skipped as not affected. New jobs
   # are added to `needs` here, not to the branch ruleset.
   ci-passed:
     if: always()
-    needs: [changes, api, migrations, secrets, format]
+    needs: [changes, api, migrations, secrets, format, agent-hooks]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

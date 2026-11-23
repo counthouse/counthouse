@@ -22,6 +22,9 @@ test-results/
 target/
 !.mvn/wrapper/maven-wrapper.jar
 
+# Personal Claude Code settings
+.claude/settings.local.json
+
 # Editors and OS
 .idea/
 .vscode/
