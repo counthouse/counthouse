@@ -47,7 +47,8 @@ the code are added together with that part.
   service, each with a test.
 - A migration is frozen once it is on `main`: change the schema with a new migration whose version is higher than
   every existing one. CI applies the migrations of `main` and then those of the branch with Flyway, and fails on a
-  changed, renamed, deleted, duplicate, out-of-order or misnamed migration.
+  changed, renamed, deleted, duplicate, out-of-order or misnamed migration. It does the same on each push to `main`,
+  from the previous commit to the new one.
 
 ### Tenant isolation
 
