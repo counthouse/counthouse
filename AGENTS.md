@@ -17,7 +17,9 @@ Planned; each folder is created when its work starts.
 ## Build and test
 
 - `apps/api`: `cd apps/api && ./mvnw -B verify`. Docker must be running: the tests start PostgreSQL 18 through
-  Testcontainers.
+  Testcontainers. Format Java first with `./mvnw spotless:apply`; the build fails on unformatted code.
+- Other files: `npm ci` once, then `npm run format` (or `npm run format:check`) at the root, on the Node version
+  in `.nvmrc`.
 
 ## Working rules
 
