@@ -16,6 +16,7 @@ npm-debug.log*
 # Test output
 coverage/
 playwright-report/
+lighthouse-report/
 test-results/
 
 # Java and Maven
