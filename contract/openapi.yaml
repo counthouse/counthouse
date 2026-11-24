@@ -21,6 +21,12 @@ info:
 
     **Versioning.** No version in the URL. `info.version` is not used.
 
+    **Errors.** Every error is a problem details object (RFC 9457) sent as
+    `application/problem+json`, and every operation lists it as its `default`
+    response. A problem with no meaning beyond its HTTP status has no `type`,
+    which RFC 9457 reads as `about:blank`, and the status phrase as its title.
+    Clients act on `status` and `type`; `detail` is for people.
+
 tags:
   - name: Me
     description: The signed-in user and their tenant.
@@ -41,6 +47,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Me"
+        default:
+          $ref: "#/components/responses/Problem"
 
 components:
   securitySchemes:
@@ -49,7 +57,38 @@ components:
       scheme: bearer
       bearerFormat: JWT
 
+  responses:
+    Problem:
+      description: An error.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+
   schemas:
+    Problem:
+      type: object
+      description: A problem details object (RFC 9457).
+      required: [title, status]
+      properties:
+        type:
+          type: string
+          format: uri-reference
+          description: Identifies the kind of problem. Absent means `about:blank`.
+        title:
+          type: string
+          description: A short summary of the kind of problem, in English.
+          example: Not Found
+        status:
+          type: integer
+          minimum: 400
+          maximum: 599
+          description: The HTTP status code.
+          example: 404
+        detail:
+          type: string
+          description: An explanation of this occurrence, in English.
+
     Me:
       type: object
       required: [user, tenant]
