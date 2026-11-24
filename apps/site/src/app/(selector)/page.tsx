@@ -39,7 +39,7 @@ export default function SelectorPage() {
               hrefLang={htmlLang[locale]}
               variant="primary"
               size="large"
-              className="w-full justify-center border border-transparent sm:w-48"
+              className="w-full justify-center sm:w-48"
             >
               {languageName[locale]}
             </ButtonLink>

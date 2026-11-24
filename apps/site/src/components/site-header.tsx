@@ -1,4 +1,4 @@
-import { ButtonLink, Header } from "@nicolassancho/ui";
+import { ButtonLink, Header, focusRing } from "@nicolassancho/ui";
 import { MessageCircle } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -28,8 +28,7 @@ export function SiteHeader({
       brand={
         <Link
           href={`/${locale}`}
-          // The design system's focus ring, which it does not export.
-          className="flex items-center gap-3 rounded-sm text-neutral-950 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+          className={`flex items-center gap-3 rounded-sm text-neutral-950 ${focusRing}`}
         >
           {/* Decorative: the name next to it is the link's text. */}
           <Image
@@ -55,9 +54,8 @@ export function SiteHeader({
             href={whatsappHref(clinic, strings.whatsappMessage)}
             variant="primary"
             size="large"
-            // The transparent border is drawn in forced-colors mode, where the background is not.
             // With large text on a narrow phone the label wraps under the icon instead of being clipped.
-            className="fixed right-4 bottom-4 z-20 max-w-[calc(100vw-2rem)] flex-wrap justify-center border border-transparent px-4 shadow-lg md:static md:max-w-none md:px-6 md:shadow-none"
+            className="fixed right-4 bottom-4 z-20 max-w-[calc(100vw-2rem)] flex-wrap justify-center px-4 shadow-lg md:static md:max-w-none md:px-6 md:shadow-none"
           >
             <MessageCircle aria-hidden size={20} />
             {strings.whatsapp}
