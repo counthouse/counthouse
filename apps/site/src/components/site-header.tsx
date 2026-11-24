@@ -32,9 +32,9 @@ export function SiteHeader({
         >
           {/* Decorative: the name next to it is the link's text. */}
           <Image
-            src={clinic.logo.src}
-            width={clinic.logo.width}
-            height={clinic.logo.height}
+            src={clinic.logo.header.src}
+            width={clinic.logo.header.width}
+            height={clinic.logo.header.height}
             alt=""
             // Above the fold: `next/image` lazy-loads by default.
             loading="eager"

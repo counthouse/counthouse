@@ -17,9 +17,9 @@ export default function SelectorPage() {
     >
       <div className="flex flex-col items-center gap-4">
         <Image
-          src={clinic.logo.src}
-          width={clinic.logo.width}
-          height={clinic.logo.height}
+          src={clinic.logo.large.src}
+          width={clinic.logo.large.width}
+          height={clinic.logo.large.height}
           alt=""
           loading="eager"
           className="size-[88px] rounded-full"
