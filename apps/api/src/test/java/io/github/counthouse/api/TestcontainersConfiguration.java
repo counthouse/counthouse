@@ -22,7 +22,7 @@ public class TestcontainersConfiguration {
     PostgreSQLContainer postgresContainer() {
         // Same image as the migrations job in ci.yml; the workflows job checks they match.
         return new PostgreSQLContainer(DockerImageName.parse(
-                                "postgres:18.7@sha256:f5cbc081c25690710f3fc6f4c61a7565382bae01ca0d0f2028a53d7926b85a20")
+                                "postgres:18.7@sha256:1090bc3a8ccfb0b55f78a494d76f8d603434f7e4553543d6e807bc7bd6bbd17f")
                         .asCompatibleSubstituteFor("postgres"))
                 .withDatabaseName("counthouse")
                 .withCopyFileToContainer(
