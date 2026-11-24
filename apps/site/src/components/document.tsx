@@ -1,7 +1,7 @@
 import "@/app/globals.css";
 
 import { brandToCssVariables, validateBrand } from "@nicolassancho/ui";
-import type { CSSProperties, ReactNode } from "react";
+import type { ReactNode } from "react";
 
 import { brand } from "@/brand";
 
@@ -12,8 +12,12 @@ if (failures.length > 0) {
     `The brand fails the design system's checks: ${JSON.stringify(failures, null, 2)}`,
   );
 }
-// React types `style` without custom properties.
-const brandStyle = brandToCssVariables(brand) as CSSProperties;
+// A `<style>` element, not the `style` of `<html>`: that attribute comes before `<meta charset>`
+// and pushed it past the first 1024 bytes, where browsers look for it. Unlayered, so it wins over
+// the defaults in Tailwind's `theme` layer.
+const brandCss = `:root{${Object.entries(brandToCssVariables(brand))
+  .map(([name, value]) => `${name}:${value}`)
+  .join(";")}}`;
 
 /** Shared by every root layout. */
 export function Document({
@@ -24,8 +28,12 @@ export function Document({
   children: ReactNode;
 }) {
   return (
-    <html lang={lang} style={brandStyle}>
+    <html lang={lang}>
       <body className="flex min-h-dvh flex-col bg-surface font-sans text-neutral-900 antialiased">
+        {/* `href` and `precedence` make React move it into `<head>`. */}
+        <style href="brand" precedence="brand">
+          {brandCss}
+        </style>
         {children}
       </body>
     </html>
