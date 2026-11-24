@@ -21,8 +21,12 @@ Built so far: `apps/api`, `apps/site` and `contract`. The other folders are crea
   `counthouse_app`. Format Java first with `./mvnw spotless:apply`; the build fails on unformatted code.
 - `apps/site`: `npm ci` once at the root, then `npm run lint -w apps/site`, `npm run typecheck -w apps/site`,
   `npm run build -w apps/site` and `npm run check:i18n -w apps/site` (reads the built pages). The build is a static
-  export written to `apps/site/out/`. Each page exists in Spanish (`/es/`) and Portuguese (`/pt/`): text comes from
-  `src/content/strings/`, and each page's `generateMetadata` returns `alternates(locale, path)`.
+  export written to `apps/site/out/`. After the build, `npm run test:a11y -w apps/site` runs axe on every built page
+  and the 404 page, in light and dark at 390 and 1280 px, and checks that each fits 320 px with text at 200%;
+  `npm run test:lighthouse -w apps/site` requires a median Lighthouse score of at least 0.95 per category on mobile
+  over 3 runs. Both need `npm exec -w apps/site -- playwright install chromium` once. Each page exists in Spanish
+  (`/es/`) and Portuguese (`/pt/`): text comes from `src/content/strings/`, and each page's `generateMetadata`
+  returns `alternates(locale, path)`.
 - Other files: `npm ci` once, then `npm run format` (or `npm run format:check`) at the root, on the Node version
   in `.nvmrc`.
 - Claude Code hooks in `.claude/hooks`: `npm run test:hooks` at the root.

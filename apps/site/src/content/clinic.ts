@@ -7,8 +7,11 @@ export interface Clinic {
   name: string;
   /** Full name, for the page title and the legal line. */
   fullName: string;
-  /** The image file and its size in pixels. */
-  logo: { src: string; width: number; height: number };
+  /** Each file is twice the size it is shown at, for high-density screens. */
+  logo: Record<
+    "header" | "large",
+    { src: string; width: number; height: number }
+  >;
   /** International format with the country code, digits only, as `wa.me` and `tel:` expect. */
   phone: string;
   /** How the phone number is written for people. */
@@ -22,7 +25,10 @@ export interface Clinic {
 export const clinic: Clinic = {
   name: "Ánima",
   fullName: "Ánima Medicina Veterinaria",
-  logo: { src: "/logo.png", width: 88, height: 88 },
+  logo: {
+    header: { src: "/logo-88.webp", width: 88, height: 88 },
+    large: { src: "/logo-176.webp", width: 176, height: 176 },
+  },
   phone: "59898657295",
   phoneLabel: "+598 98 657 295",
   address: "Av. Sarandí 711, sala 2, Rivera, Uruguay",

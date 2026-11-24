@@ -1,11 +1,11 @@
 // Checks `out/` after `next build`: `lang`, a self canonical, and two-way `hreflang` links.
-import { readdirSync, readFileSync } from "node:fs";
-import { join, relative } from "node:path";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
 import { clinic } from "../src/content/clinic.ts";
 import { htmlLang, isLocale } from "../src/i18n/locales.ts";
+import { builtPages, out } from "./built-pages.mts";
 
-const out = join(import.meta.dirname, "..", "out");
 const origin = new URL(clinic.siteUrl).origin;
 
 interface Page {
@@ -16,16 +16,8 @@ interface Page {
 }
 
 const pages = new Map<string, Page>();
-for (const entry of readdirSync(out, {
-  recursive: true,
-  withFileTypes: true,
-})) {
-  if (!entry.isFile() || entry.name !== "index.html") continue;
-  const file = join(entry.parentPath, entry.name);
-  const path = `/${relative(out, file).replace(/index\.html$/, "")}`;
-  // Next's copies of the 404 page; `404.html` is the one served.
-  if (path === "/404/" || path === "/_not-found/") continue;
-  const html = readFileSync(file, "utf8");
+for (const path of builtPages()) {
+  const html = readFileSync(join(out, path, "index.html"), "utf8");
   const head = html.slice(0, html.indexOf("</head>"));
   pages.set(origin + path, {
     path,

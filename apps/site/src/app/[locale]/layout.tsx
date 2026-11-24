@@ -14,10 +14,17 @@ export function generateStaticParams() {
 }
 
 // No `alternates` here: every page below a layout inherits its value.
-export const metadata: Metadata = {
-  metadataBase: new URL(clinic.siteUrl),
-  title: clinic.fullName,
-};
+export async function generateMetadata({
+  params,
+}: LayoutProps<"/[locale]">): Promise<Metadata> {
+  const { locale } = await params;
+  if (!isLocale(locale)) notFound();
+  return {
+    metadataBase: new URL(clinic.siteUrl),
+    title: clinic.fullName,
+    description: getStrings(locale).description,
+  };
+}
 
 export default async function LocaleLayout({
   children,
