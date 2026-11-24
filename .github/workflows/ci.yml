@@ -2,7 +2,7 @@ name: CI
 
 on:
   pull_request:
-    # `edited` covers a change of base branch, which the default types miss.
+    # `edited` catches a base branch change; never skip jobs for this event.
     types: [opened, synchronize, reopened, edited]
   push:
     branches: [main]
