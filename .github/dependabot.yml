@@ -11,9 +11,10 @@ updates:
     groups:
       maven:
         update-types: [minor, patch]
-        # A Spotless update can change the formatter and reformat code, so it
-        # comes in its own pull request instead of failing the whole group.
-        exclude-patterns: ["*spotless*"]
+        # A Spotless update can change the formatter and reformat code, and an
+        # openapi-generator update can change the generated code, so each comes
+        # in its own pull request instead of failing the whole group.
+        exclude-patterns: ["*spotless*", "*openapi-generator*"]
 
   - package-ecosystem: github-actions
     directory: /

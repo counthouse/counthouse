@@ -36,8 +36,20 @@ the code are added together with that part.
 
 ## Tests
 
-- Every rule is enforced by a test or a CI check, not only by a sentence in a document.
+- Every rule is enforced by a test or a CI check, not only by a sentence in a document. A rule checked only in
+  review says so.
 - A new test is seen failing once, by breaking the code it protects, before it is trusted.
+
+## Contract
+
+- `contract/openapi.yaml` is the source of truth for the API. It changes in the pull request whose code uses it: an
+  operation is added together with the code that implements it.
+- The conventions at the top of the file (tenancy, ids, naming, versioning) are checked only in review.
+- The API's build generates Spring interfaces and models from the contract into `target/`; nothing generated is
+  committed. The generated packages, `io.github.counthouse.contract` and its `model` subpackage, are outside the
+  application's package, so every module can use them.
+- The interfaces have no default methods, so a controller that leaves out an operation of its interface fails to
+  compile (`generatedInterfacesHaveNoDefaultMethods`).
 
 ## Database
 
@@ -123,6 +135,6 @@ give early feedback; CI and the branch ruleset on `main` stay the guard.
   shell are not seen; the `api` job runs the same checks and the tests.
 - The hooks are tested with `npm run test:hooks`, which the `agent-hooks` job runs.
 
-Some areas are reviewed line by line, whoever wrote the change: exclusion constraints and their concurrency tests,
-slot generation, row-level security policies and tenant scope, migrations, token handling, CSRF protection, tenant
-provisioning and authorization.
+Some areas are reviewed line by line, whoever wrote the change: the contract, exclusion constraints and their
+concurrency tests, slot generation, row-level security policies and tenant scope, migrations, token handling, CSRF
+protection, tenant provisioning and authorization.

@@ -1,0 +1,94 @@
+openapi: 3.0.3
+
+info:
+  title: Counthouse API
+  version: "1"
+  description: |
+    The contract of the Counthouse API. The API implements interfaces generated
+    from this file, and its clients generate their types from it.
+
+    ## Conventions
+
+    **Tenancy.** Operations for signed-in staff take the tenant from the access
+    token. No path, query or body field carries a tenant id.
+
+    **Ids.** UUIDs. Clients treat them as opaque.
+
+    **Naming.** Collections are plural, and path segments are kebab-case. `/me`
+    is the signed-in user. Properties and query parameters are camelCase. Enum
+    values are UPPER_SNAKE_CASE, except codes defined elsewhere, such as
+    language tags. Operation ids are a verb and a noun, such as `getMe`.
+
+    **Versioning.** No version in the URL. `info.version` is not used.
+
+tags:
+  - name: Me
+    description: The signed-in user and their tenant.
+
+security:
+  - bearerAuth: []
+
+paths:
+  /me:
+    get:
+      tags: [Me]
+      operationId: getMe
+      summary: The signed-in user and their tenant
+      responses:
+        "200":
+          description: The signed-in user and their tenant
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Me"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Me:
+      type: object
+      required: [user, tenant]
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        tenant:
+          $ref: "#/components/schemas/Tenant"
+
+    User:
+      type: object
+      required: [id, role]
+      properties:
+        id:
+          type: string
+          format: uuid
+        role:
+          $ref: "#/components/schemas/Role"
+
+    Role:
+      type: string
+      enum: [STAFF, ADMIN]
+
+    Tenant:
+      type: object
+      required: [id, name, timeZone, locale]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        timeZone:
+          type: string
+          description: IANA time zone.
+          example: America/Montevideo
+        locale:
+          type: string
+          description: |
+            Default language of the tenant's staff, a BCP 47 language tag.
+            Today `es` or `en`.
+          example: es
