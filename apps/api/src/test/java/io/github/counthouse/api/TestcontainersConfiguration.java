@@ -20,7 +20,10 @@ public class TestcontainersConfiguration {
 
     @Bean
     PostgreSQLContainer postgresContainer() {
-        return new PostgreSQLContainer(DockerImageName.parse("postgres:18"))
+        // Same image as the migrations job in ci.yml; the workflows job checks they match.
+        return new PostgreSQLContainer(DockerImageName.parse(
+                                "postgres:18.7@sha256:f5cbc081c25690710f3fc6f4c61a7565382bae01ca0d0f2028a53d7926b85a20")
+                        .asCompatibleSubstituteFor("postgres"))
                 .withDatabaseName("counthouse")
                 .withCopyFileToContainer(
                         MountableFile.forClasspathResource("db/roles.sql"), "/docker-entrypoint-initdb.d/roles.sql");
