@@ -1,4 +1,4 @@
-import { Footer, TextLink } from "@nicolassancho/ui";
+import { Footer, Text, TextLink } from "@nicolassancho/ui";
 
 import { LanguageLinks } from "@/components/language-links";
 import { stackedLinkClass } from "@/components/link-styles";
@@ -30,7 +30,7 @@ export function SiteFooter({
               {clinic.fullName}
             </p>
             <p>{clinic.address}</p>
-            <ul className="flex flex-col gap-1">
+            <ul className="flex flex-col gap-2">
               {[
                 {
                   label: strings.whatsapp,
@@ -52,10 +52,16 @@ export function SiteFooter({
           </address>
           {/* Library columns cannot set `lang` or `aria-current`. */}
           <section aria-labelledby="footer-language">
-            <h2 id="footer-language" className="font-medium text-neutral-950">
+            <Text
+              as="h2"
+              id="footer-language"
+              size="small"
+              weight="semibold"
+              color="darker"
+            >
               {strings.language}
-            </h2>
-            <LanguageLinks current={locale} show="all" />
+            </Text>
+            <LanguageLinks current={locale} show="all" className="mt-2" />
           </section>
         </div>
       }
