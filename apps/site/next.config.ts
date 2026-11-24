@@ -13,6 +13,10 @@ const nextConfig: NextConfig = {
   // `next dev` would otherwise write an AGENTS.md for coding agents into this
   // folder; the repository root has its own.
   agentRules: false,
+  experimental: {
+    // One root layout per language leaves the 404 page without one: `app/global-not-found.tsx`.
+    globalNotFound: true,
+  },
 };
 
 export default nextConfig;
