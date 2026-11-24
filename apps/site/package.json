@@ -1,6 +1,7 @@
 {
   "name": "@counthouse/site",
   "private": true,
+  "description": "Static website of the first business that uses Counthouse. Built for that business; not part of the product.",
   "engines": {
     "node": ">=26"
   },
@@ -22,6 +23,7 @@
   },
   "dependencies": {
     "@nicolassancho/ui": "5.1.1",
+    "lucide-react": "1.73.0",
     "next": "16.4.6",
     "react": "19.3.1",
     "react-dom": "19.3.1",
