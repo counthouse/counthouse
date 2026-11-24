@@ -4,10 +4,14 @@ import type { Metadata } from "next";
 import { Document } from "@/components/document";
 import { NavLink } from "@/components/nav-link";
 import { clinic } from "@/content/clinic";
+import { es } from "@/content/strings/es";
+import { pt } from "@/content/strings/pt";
 import { htmlLang, locales } from "@/i18n/locales";
 
 export const metadata: Metadata = {
   title: `404 · ${clinic.fullName}`,
+  // Both languages, like the page.
+  description: `${es.description} ${pt.description}`,
 };
 
 const message = {
