@@ -5,7 +5,7 @@ anything.
 
 ## Layout
 
-Built so far: `apps/api` and `apps/site`. The other folders are created when their work starts.
+Built so far: `apps/api`, `apps/site` and `contract`. The other folders are created when their work starts.
 
 - `apps/api`: Spring Boot API, the only owner of the database.
 - `apps/backoffice`: Next.js App Router backoffice for staff.

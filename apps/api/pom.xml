@@ -140,6 +140,45 @@
           </compilerArgs>
         </configuration>
       </plugin>
+      <plugin>
+        <groupId>org.openapitools</groupId>
+        <artifactId>openapi-generator-maven-plugin</artifactId>
+        <version>7.27.0</version>
+        <executions>
+          <execution>
+            <id>contract</id>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <configuration>
+              <inputSpec>${project.basedir}/../../contract/openapi.yaml</inputSpec>
+              <generatorName>spring</generatorName>
+              <!-- Outside the application's package: Spring Modulith would make a subpackage
+                   internal to one module, and every module needs the models. -->
+              <apiPackage>io.github.counthouse.contract</apiPackage>
+              <modelPackage>io.github.counthouse.contract.model</modelPackage>
+              <generateSupportingFiles>false</generateSupportingFiles>
+              <configOptions>
+                <interfaceOnly>true</interfaceOnly>
+                <!-- No default methods: a controller that misses an operation fails to compile. -->
+                <skipDefaultInterface>true</skipDefaultInterface>
+                <useTags>true</useTags>
+                <useSpringBoot4>true</useSpringBoot4>
+                <useJackson3>true</useJackson3>
+                <!-- Without it the models use Spring's deprecated @Nullable and fail -Werror. -->
+                <useJspecify>true</useJspecify>
+                <documentationProvider>none</documentationProvider>
+                <annotationLibrary>none</annotationLibrary>
+                <hideGenerationTimestamp>true</hideGenerationTimestamp>
+                <openApiNullable>false</openApiNullable>
+                <!-- Both set explicitly: the generator warns when they are left unset. -->
+                <generateJsonIncludeAnnotations>true</generateJsonIncludeAnnotations>
+                <generateJsonSetterNullsAnnotations>false</generateJsonSetterNullsAnnotations>
+              </configOptions>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 
