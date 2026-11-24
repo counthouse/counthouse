@@ -72,6 +72,30 @@ tables that each break it, so a rule that can no longer fail is caught too.
 - The API stores no large objects: row-level security does not cover them.
 - Data access runs inside `TenantScope`: the transaction manager refuses a transaction without a tenant.
 
+## Workflows
+
+- The `workflows` job lints `.github/workflows` on every pull request. actionlint checks syntax, expressions and
+  shell scripts (through shellcheck). zizmor checks security with its regular persona; any finding of low severity
+  or above fails the job. zizmor's online audits, such as known-vulnerable actions, can fail a pull request that
+  changes no workflow when a new advisory is published; the fix is the Dependabot security update or a bumped pin.
+- Run both from the repository root, with the versions CI uses: actionlint's is in `ci.yml`, and zizmor prints its
+  own at the start of its step in the `workflows` job log. The local zizmor run is offline; CI also runs the online
+  audits.
+
+  ```sh
+  docker run --rm -v "$PWD:/repo:ro" --workdir /repo rhysd/actionlint:<version> -color
+  docker run --rm -v "$PWD:/repo:ro" --workdir /repo ghcr.io/zizmorcore/zizmor:<version> \
+    --offline --min-severity=low --min-confidence=low .
+  ```
+
+- Actions are pinned by commit SHA and updated by Dependabot. zizmor's version comes with the `zizmor-action`
+  release.
+- Images run from `run:` scripts (actionlint, gitleaks) are pinned by digest and bumped by hand: Dependabot does not
+  read them.
+- PostgreSQL is pinned by digest in the `migrations` service and in `TestcontainersConfiguration.java`. Bump both in
+  one commit when a PostgreSQL minor release ships. The `workflows` job fails when they differ or the digest is
+  missing.
+
 ## Decision records
 
 - Decisions with real trade-offs get a record in `docs/adr/`, stating the decision, the alternatives and the
