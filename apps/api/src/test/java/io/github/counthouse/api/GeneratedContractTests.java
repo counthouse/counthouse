@@ -18,7 +18,6 @@ import org.springframework.boot.test.context.TestComponent;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
 import org.springframework.context.annotation.Import;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
@@ -51,12 +50,6 @@ class GeneratedContractTests {
                           }
                         }
                         """);
-    }
-
-    @Test
-    void answersOnlyJson() {
-        assertThat(mvc.get().uri("/me").accept(MediaType.APPLICATION_PROBLEM_JSON))
-                .hasStatus(HttpStatus.NOT_ACCEPTABLE);
     }
 
     @Test

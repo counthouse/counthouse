@@ -50,6 +50,32 @@ the code are added together with that part.
   application's package, so every module can use them.
 - The interfaces have no default methods, so a controller that leaves out an operation of its interface fails to
   compile (`generatedInterfacesHaveNoDefaultMethods`).
+- Every operation lists the shared `Problem` response as its `default` response
+  (`everyOperationListsTheProblemAsItsDefaultResponse`).
+
+## Errors
+
+Every error the API answers is a problem details object (RFC 9457) sent as `application/problem+json`, matching the
+contract's `Problem` schema. Tests annotated `@ApiTest` run the API on a real server, and every response their
+`RestTestClient` receives is checked against the contract (`ContractValidation`), including responses whose body the
+test does not read.
+
+- Errors inside Spring MVC are rendered by Spring (`renderUnhandledExceptions`). Its own exceptions keep their status;
+  any other exception is a 500 without its message, logged once with its stack trace and recorded in
+  `http.server.requests` (`controllerFailureIsAServerErrorWithoutItsMessage`). Do not add a catch-all
+  `@ExceptionHandler`, and do not throw a 5xx `ResponseStatusException`: its reason would reach the client and
+  nothing would log it.
+- Errors outside Spring MVC, such as a failing servlet filter or `sendError`, reach `ProblemErrorController`, which
+  keeps the status and turns a status Spring does not know into a 500. `/error` requested directly is a 404
+  (`ProblemDetailsTests`).
+- A success body is `application/json`, never `application/problem+json`, although the generated `produces` lists
+  both (`successIsNeverLabelledAsAProblem`, `operationWithOnlyAnErrorMediaTypeAcceptsJsonClients`).
+- A problem with no meaning beyond its status has no `type`. A problem type of its own gets a URI and its own
+  schema in the contract when the first one is needed.
+- Outside the contract: actuator endpoints answer in actuator's format (a DOWN health check is a 503 with actuator's
+  body); requests that are not valid HTTP, such as a malformed URL or request line, get Tomcat's 400 page, which shows
+  no server version, exception or report (`requestsTomcatRejectsRevealNothing`); an `Accept` header that cannot be
+  parsed gets the error status with an empty body.
 
 ## Database
 
