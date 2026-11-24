@@ -92,7 +92,9 @@ jobs:
     timeout-minutes: 10
     services:
       postgres:
-        image: postgres:18
+        # Same image as TestcontainersConfiguration.java; the workflows job
+        # checks they match.
+        image: postgres:18.7@sha256:f5cbc081c25690710f3fc6f4c61a7565382bae01ca0d0f2028a53d7926b85a20
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: counthouse
@@ -237,12 +239,55 @@ jobs:
       # is nothing to install.
       - run: npm run test:hooks
 
+  # Lints the workflows: actionlint for syntax, expressions and shell
+  # scripts, zizmor for security issues, and a check of the PostgreSQL pin in
+  # the migrations service. Runs on every change, like `format`: zizmor's
+  # online audits can fail on a new advisory without a workflow edit. Each
+  # check runs even when an earlier one failed, so one run reports them all.
+  workflows:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # Bumped by hand: Dependabot does not read images in `run:` scripts.
+      - name: Run actionlint
+        run: |
+          docker run --rm -v "$PWD:/repo:ro" --workdir /repo \
+            rhysd/actionlint:1.7.12@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667 \
+            -color
+      # `latest` is the zizmor version locked in this action release, so
+      # Dependabot's update of the action also updates zizmor.
+      - uses: zizmorcore/zizmor-action@bd12b495c90993a4301c73398142281a61499af3 # v0.9.0
+        if: ${{ !cancelled() }}
+        with:
+          version: latest
+          persona: regular
+          min-severity: low
+          min-confidence: low
+          advanced-security: false
+          annotations: true
+      # The migrations service and the API tests run the same PostgreSQL
+      # build, pinned by digest.
+      - name: Check the PostgreSQL images match
+        if: ${{ !cancelled() }}
+        run: |
+          ci=$(sed -n 's/^ *image: \(postgres:.*\)$/\1/p' .github/workflows/ci.yml)
+          tests=$(grep -oE '"postgres:[^"]+"' \
+            apps/api/src/test/java/io/github/counthouse/api/TestcontainersConfiguration.java | tr -d '"')
+          echo "ci.yml: $ci"
+          echo "tests:  $tests"
+          case "$ci" in *@sha256:*) ;; *) echo "Not pinned by digest"; exit 1 ;; esac
+          [ "$ci" = "$tests" ] || { echo "The images differ"; exit 1; }
+
   # The only required check: it fails when any job failed or was cancelled,
   # and passes when jobs succeeded or were skipped as not affected. New jobs
   # are added to `needs` here, not to the branch ruleset.
   ci-passed:
     if: always()
-    needs: [changes, api, migrations, site, secrets, format, agent-hooks]
+    needs:
+      [changes, api, migrations, site, secrets, format, agent-hooks, workflows]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
