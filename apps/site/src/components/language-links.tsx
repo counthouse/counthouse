@@ -11,15 +11,21 @@ import { htmlLang, type Locale, languageName, locales } from "@/i18n/locales";
 export function LanguageLinks({
   current,
   show,
+  className,
 }: {
   current: Locale;
   show: "others" | "all";
+  className?: string;
 }) {
   const pathname = usePathname();
   const rest = pathname.split("/").slice(2).join("/");
   const shown = show === "all" ? locales : locales.filter((l) => l !== current);
   return (
-    <ul className="flex flex-col gap-1">
+    <ul
+      className={
+        className ? `flex flex-col gap-2 ${className}` : "flex flex-col gap-2"
+      }
+    >
       {shown.map((locale) => (
         <li key={locale}>
           <TextLink

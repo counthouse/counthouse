@@ -48,7 +48,7 @@ export default function SelectorPage() {
       </ul>
       <address className="flex flex-col items-center gap-1 not-italic">
         <p>{clinic.address}</p>
-        <ul className="flex flex-col items-center gap-1">
+        <ul className="flex flex-col items-center gap-2">
           <li>
             <TextLink
               href={whatsappHref(clinic, es.whatsappMessage)}
