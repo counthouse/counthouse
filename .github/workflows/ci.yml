@@ -80,13 +80,14 @@ jobs:
           path: apps/api/target/surefire-reports/
           retention-days: 7
 
-  # Applies the base branch's migrations, then this branch's, so Flyway
-  # validates the existing history: a changed, renamed, deleted, duplicate,
-  # out-of-order or misnamed migration fails. The rules are set on the
-  # command line, which overrides any Flyway configuration the branch adds.
+  # Applies the base's migrations (the previous main commit on a push), then
+  # this commit's, so Flyway validates the existing history: a changed,
+  # renamed, deleted, duplicate, out-of-order or misnamed migration fails. The
+  # rules are set on the command line, which overrides any Flyway
+  # configuration the branch adds.
   migrations:
     needs: changes
-    if: github.event_name == 'pull_request' && needs.changes.outputs.api == 'true'
+    if: needs.changes.outputs.api == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     services:
@@ -110,17 +111,28 @@ jobs:
         with:
           distribution: temurin
           java-version: "25"
-          cache: maven
-          cache-dependency-path: apps/api/pom.xml
+      # Its own cache: setup-java keys the Maven cache on the pom alone, so this
+      # job would share the api job's entry, whose copy on main is saved by api
+      # and lacks the Flyway plugin. This job also runs on pushes to main, so
+      # pull requests restore a complete entry from the default branch. No
+      # restore key, like setup-java: a pom change starts from a clean cache.
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.m2/repository
+            ~/.m2/wrapper
+          key: maven-migrations-${{ runner.os }}-${{ hashFiles('apps/api/pom.xml', 'apps/api/.mvn/wrapper/maven-wrapper.properties') }}
       # The same roles as the tests: migrations run as the migrator, which owns
       # the database but is not a superuser.
       - name: Create the database roles
         env:
           POSTGRES: ${{ job.services.postgres.id }}
         run: docker exec -i "$POSTGRES" psql -v ON_ERROR_STOP=1 -U postgres -d counthouse < src/test/resources/db/roles.sql
-      - name: Migrate from the base branch to this branch
+      # Pull requests migrate from their base; pushes to main from the previous
+      # main commit.
+      - name: Migrate from the base to this commit
         env:
-          BASE: ${{ github.event.pull_request.base.sha }}
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
         run: |
           git worktree add --detach "$RUNNER_TEMP/base" "$BASE"
           migrate() {
