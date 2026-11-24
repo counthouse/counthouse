@@ -169,6 +169,10 @@
               <apiPackage>io.github.counthouse.contract</apiPackage>
               <modelPackage>io.github.counthouse.contract.model</modelPackage>
               <generateSupportingFiles>false</generateSupportingFiles>
+              <!-- Errors are written by Spring's exception handling, which builds ProblemDetail. -->
+              <schemaMappings>
+                <schemaMapping>Problem=org.springframework.http.ProblemDetail</schemaMapping>
+              </schemaMappings>
               <configOptions>
                 <interfaceOnly>true</interfaceOnly>
                 <!-- No default methods: a controller that misses an operation fails to compile. -->
