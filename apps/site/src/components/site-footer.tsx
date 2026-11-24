@@ -1,41 +1,63 @@
 import { Footer, TextLink } from "@nicolassancho/ui";
 
+import { LanguageLinks } from "@/components/language-links";
+import { stackedLinkClass } from "@/components/link-styles";
 import { type Clinic, telHref, whatsappHref } from "@/content/clinic";
-import { strings } from "@/content/strings";
+import type { Strings } from "@/content/strings";
+import type { Locale } from "@/i18n/locales";
 
 // The site is a static export, so this is the year of the build.
 const buildYear = new Date().getFullYear();
 
-/** The page footer: the business's contact details and the legal line. */
-export function SiteFooter({ clinic }: { clinic: Clinic }) {
+export function SiteFooter({
+  clinic,
+  locale,
+  strings,
+}: {
+  clinic: Clinic;
+  locale: Locale;
+  strings: Strings;
+}) {
   return (
     <Footer
+      navLabel={strings.footerNav}
       // Room for the fixed WhatsApp link on phones, so it never covers the legal line.
       className="pb-20 md:pb-0"
       brand={
-        <address className="flex flex-col gap-2 not-italic">
-          <p className="font-display text-xl font-medium text-neutral-950">
-            {clinic.fullName}
-          </p>
-          <p>{clinic.address}</p>
-          <ul className="flex flex-col gap-1">
-            {[
-              { label: strings.whatsapp, href: whatsappHref(clinic) },
-              { label: strings.call(clinic.phoneLabel), href: telHref(clinic) },
-              { label: strings.directions, href: clinic.mapUrl },
-            ].map(({ label, href }) => (
-              <li key={href}>
-                {/* Stacked links, not links in a sentence: 44px tall on touch screens (WCAG 2.5.5). */}
-                <TextLink
-                  href={href}
-                  className="inline-flex items-center py-1 text-primary pointer-coarse:min-h-11"
-                >
-                  {label}
-                </TextLink>
-              </li>
-            ))}
-          </ul>
-        </address>
+        <div className="flex flex-col gap-8">
+          <address className="flex flex-col gap-2 not-italic">
+            <p className="font-display text-xl font-medium text-neutral-950">
+              {clinic.fullName}
+            </p>
+            <p>{clinic.address}</p>
+            <ul className="flex flex-col gap-1">
+              {[
+                {
+                  label: strings.whatsapp,
+                  href: whatsappHref(clinic, strings.whatsappMessage),
+                },
+                {
+                  label: strings.call(clinic.phoneLabel),
+                  href: telHref(clinic),
+                },
+                { label: strings.directions, href: clinic.mapUrl },
+              ].map(({ label, href }) => (
+                <li key={href}>
+                  <TextLink href={href} className={stackedLinkClass}>
+                    {label}
+                  </TextLink>
+                </li>
+              ))}
+            </ul>
+          </address>
+          {/* Library columns cannot set `lang` or `aria-current`. */}
+          <section aria-labelledby="footer-language">
+            <h2 id="footer-language" className="font-medium text-neutral-950">
+              {strings.language}
+            </h2>
+            <LanguageLinks current={locale} show="all" />
+          </section>
+        </div>
       }
       legal={`© ${buildYear} ${clinic.fullName}`}
     />

@@ -3,22 +3,31 @@ import { MessageCircle } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
+import { LanguageLinks } from "@/components/language-links";
 import { type Clinic, whatsappHref } from "@/content/clinic";
-import { strings } from "@/content/strings";
+import type { Strings } from "@/content/strings";
+import type { Locale } from "@/i18n/locales";
 
 /**
- * The page header: the business's logo and name linking home, and the WhatsApp link. On phones
- * the link is fixed to the bottom right of the screen, where it stays in reach while scrolling;
- * from `md` up it sits in the header. It is one element either way, so it stays inside the
- * header landmark and second in tab order.
+ * On phones the WhatsApp link is fixed to the bottom right, in reach while scrolling; from `md` up
+ * it sits in the header. One element either way, so it stays in the header landmark and tab order.
  */
-export function SiteHeader({ clinic }: { clinic: Clinic }) {
+export function SiteHeader({
+  clinic,
+  locale,
+  strings,
+}: {
+  clinic: Clinic;
+  locale: Locale;
+  strings: Strings;
+}) {
   return (
     <Header
       className="border-b border-neutral-200 shadow-none"
+      navLabel={strings.headerNav}
       brand={
         <Link
-          href="/"
+          href={`/${locale}`}
           // The design system's focus ring, which it does not export.
           className="flex items-center gap-3 rounded-sm text-neutral-950 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
         >
@@ -40,17 +49,20 @@ export function SiteHeader({ clinic }: { clinic: Clinic }) {
         </Link>
       }
       actions={
-        <ButtonLink
-          href={whatsappHref(clinic)}
-          variant="primary"
-          size="large"
-          // The transparent border is drawn in forced-colors mode, where the background is not.
-          // With large text on a narrow phone the label wraps under the icon instead of being clipped.
-          className="fixed right-4 bottom-4 z-20 max-w-[calc(100vw-2rem)] flex-wrap justify-center border border-transparent px-4 shadow-lg md:static md:max-w-none md:px-6 md:shadow-none"
-        >
-          <MessageCircle aria-hidden size={20} />
-          {strings.whatsapp}
-        </ButtonLink>
+        <>
+          <LanguageLinks current={locale} show="others" />
+          <ButtonLink
+            href={whatsappHref(clinic, strings.whatsappMessage)}
+            variant="primary"
+            size="large"
+            // The transparent border is drawn in forced-colors mode, where the background is not.
+            // With large text on a narrow phone the label wraps under the icon instead of being clipped.
+            className="fixed right-4 bottom-4 z-20 max-w-[calc(100vw-2rem)] flex-wrap justify-center border border-transparent px-4 shadow-lg md:static md:max-w-none md:px-6 md:shadow-none"
+          >
+            <MessageCircle aria-hidden size={20} />
+            {strings.whatsapp}
+          </ButtonLink>
+        </>
       }
     />
   );
