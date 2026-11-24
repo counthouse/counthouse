@@ -14,6 +14,8 @@ In development and not deployed yet. Progress is tracked in GitHub milestones an
 ## What it is not
 
 - Not a SaaS. The code is tenant-aware, and production runs one tenant.
+- Not a website builder. `apps/site` is built for the first business and is not part of the product: everything
+  about that business is in its content and brand files.
 - Not open source. The code is published for review; see [LICENSE](LICENSE).
 
 ## How it is built

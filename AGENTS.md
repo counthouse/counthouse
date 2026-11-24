@@ -9,7 +9,7 @@ Built so far: `apps/api` and `apps/site`. The other folders are created when the
 
 - `apps/api`: Spring Boot API, the only owner of the database.
 - `apps/backoffice`: Next.js App Router backoffice for staff.
-- `apps/site`: Next.js static site of the first tenant.
+- `apps/site`: Next.js static site of the first business that uses Counthouse; not part of the product.
 - `contract/openapi.yaml`: the API contract; code on both sides is generated from it.
 - `docs/`: decision records, architecture and operations.
 - `infra/`: deployment configuration.
