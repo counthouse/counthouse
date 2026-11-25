@@ -41,6 +41,17 @@ public class TestcontainersConfiguration {
         };
     }
 
+    /** Keycloak, shared by every context; see {@link TestKeycloak}. */
+    @Bean
+    DynamicPropertyRegistrar keycloak() {
+        return registry -> {
+            registry.add("counthouse.auth.issuer", () -> TestKeycloak.get().issuer());
+            registry.add("counthouse.auth.jwk-set-uri", () -> TestKeycloak.get().jwkSetUri());
+            registry.add("counthouse.auth.client-id", () -> TestKeycloak.CLIENT_ID);
+            registry.add("counthouse.auth.resource", () -> "https://api.example.test");
+        };
+    }
+
     @Bean
     MigratorDatabase migratorDatabase(PostgreSQLContainer postgres) {
         return new MigratorDatabase(JdbcClient.create(
