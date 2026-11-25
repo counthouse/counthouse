@@ -133,6 +133,7 @@ tables that each break it, so a rule that can no longer fail is caught too.
 - PostgreSQL is pinned by digest in the `migrations` service and in `TestcontainersConfiguration.java`. Bump both in
   one commit when a PostgreSQL minor release ships. The `workflows` job fails when they differ or the digest is
   missing.
+- Keycloak is pinned by digest in `TestKeycloak.java` and bumped by hand.
 
 ## Decision records
 
