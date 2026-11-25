@@ -3,15 +3,29 @@ package io.github.counthouse.api;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
+import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.core.importer.ImportOption;
+import com.tngtech.archunit.lang.ArchRule;
+import com.tngtech.archunit.lang.EvaluationResult;
+import io.github.counthouse.fixtures.contractrule.InRoot;
+import io.github.counthouse.fixtures.contractrule.identity.InModule;
+import io.github.counthouse.fixtures.contractrule.identity.web.InModuleWeb;
+import io.github.counthouse.fixtures.contractrule.identity.web.dto.InModuleWebSubpackage;
+import io.github.counthouse.fixtures.contractrule.identity.webhooks.InWebPrefixedPackage;
+import io.github.counthouse.fixtures.contractrule.tenancy.internal.web.InNestedWeb;
+import io.github.counthouse.fixtures.contractrule.web.InTopLevelWeb;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.modulith.core.ApplicationModule;
 import org.springframework.modulith.core.ApplicationModules;
 import org.springframework.modulith.core.DependencyDepth;
@@ -32,16 +46,42 @@ class ModularityTests {
     /** Generated contract types stay in a module's {@code web} package; services and entities keep their own. */
     @Test
     void onlyWebPackagesUseTheGeneratedContract() {
-        noClasses()
-                .that()
-                .resideOutsideOfPackage("io.github.counthouse.api..web..")
-                .should()
-                .dependOnClassesThat()
-                .resideInAPackage("io.github.counthouse.contract..")
-                .because("the contract is the HTTP boundary: each module maps it to its own types in its web package")
+        contractOnlyInModuleWebPackages("io.github.counthouse.api")
                 .check(new ClassFileImporter()
                         .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
                         .importPackages("io.github.counthouse.api"));
+    }
+
+    @ParameterizedTest(name = "{0} allowed: {1}")
+    @MethodSource("contractRuleFixtures")
+    void contractRuleAllowsOnlyAModulesWebPackage(Class<?> fixture, boolean allowed) {
+        // An allowed fixture leaves the that() clause empty, which ArchUnit rejects by default.
+        EvaluationResult result = contractOnlyInModuleWebPackages("io.github.counthouse.fixtures.contractrule")
+                .allowEmptyShould(true)
+                .evaluate(new ClassFileImporter().importClasses(fixture));
+        assertThat(result.hasViolation()).as(fixture.getName()).isEqualTo(!allowed);
+    }
+
+    static Stream<Arguments> contractRuleFixtures() {
+        return Stream.of(
+                arguments(InModuleWeb.class, true),
+                arguments(InModuleWebSubpackage.class, true),
+                arguments(InNestedWeb.class, false),
+                arguments(InTopLevelWeb.class, false),
+                arguments(InWebPrefixedPackage.class, false),
+                arguments(InModule.class, false),
+                arguments(InRoot.class, false));
+    }
+
+    /** Modules are the direct subpackages of {@code root}, so {@code *.web} is exactly a module's web package. */
+    static ArchRule contractOnlyInModuleWebPackages(String root) {
+        return noClasses()
+                .that()
+                .resideOutsideOfPackage(root + ".*.web..")
+                .should()
+                .dependOnClassesThat()
+                .resideInAPackage("io.github.counthouse.contract..")
+                .because("the contract is the HTTP boundary: each module maps it to its own types in its web package");
     }
 
     /**
