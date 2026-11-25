@@ -77,6 +77,36 @@ test does not read.
   no server version, exception or report (`requestsTomcatRejectsRevealNothing`); an `Accept` header that cannot be
   parsed gets the error status with an empty body.
 
+## Authentication
+
+Every request but the health check, the error dispatch and the protected resource metadata carries a Keycloak access
+token (ADR 0002). `SecurityConfiguration` wires the whole flow and is the place to read it. Tests run against a
+Keycloak started from `infra/keycloak/realm.json` (`TestKeycloak`), shared by the whole test run.
+
+- A token passes only if it is an RFC 9068 access token for this API, issued to the backoffice's client and signed
+  with a key Keycloak publishes. Each rejected case has a test named after the threat (`TokenThreatTests`).
+- The tenant is the token's one organization alias, in canonical UUID form. The staff member is the active one whose
+  login matches the token's issuer and subject in that tenant; code reads it with `CurrentActor.get()`. Generated
+  contract types stay in the web layer (`onlyTheWebLayerUsesTheGeneratedContract`).
+- A rejected token is a 401 problem with `WWW-Authenticate: Bearer error="invalid_token"` and no description; no
+  token is a 401 with `Bearer`. Tokens and subjects are never logged (`keepsTokensAndSubjectsOutOfTheLogs`).
+- Keycloak's keys are cached and fetched at most once per refresh interval. When a fetch fails, the last keys stay
+  in use for the outage window from that first failure: valid tokens pass, a token signed with an unknown key is a
+  401, and without usable keys every request is a 503 (`KeycloakOutageTests`, `KeysNeverLoadedTests`). A new signing
+  key is published below the current one's priority and made the signing key only after one cache lifetime.
+- Every operation in the contract needs a token and a login in its tenant, none is public unless listed, and every
+  operation registers an isolation case, which calls it with another tenant's token on seeded rows, or an exemption
+  with its reason (`ContractSecurityTests`). A new operation fails the build until it has one.
+- The realm file defines no keys, secrets or users. `RealmShapeTests` checks the imported realm: no password grant,
+  public client, wildcard redirect, service account, device grant, CIBA, token exchange or offline tokens on any
+  enabled client; built-in clients off; only passkey registration as a required action; an organization claim of
+  aliases only; the backoffice's client mappers.
+- Public paths: `/actuator/health` and Spring Security's RFC 9728 metadata at `/.well-known/oauth-protected-resource`,
+  whose values come from configuration (`PublicPathsTests`). Every other path, unknown ones and `/error` included, is
+  a 401 without a token. A request that sends a token is checked on every path, public ones included.
+- No endpoint is asynchronous yet: `ActorFilter` does not run on an async dispatch, so an async endpoint would find no
+  tenant scope and no staff member, and fail.
+
 ## Database
 
 - Rules on a table's own data are named constraints. Each constraint has a test that sees it reject bad data and
@@ -133,6 +163,7 @@ tables that each break it, so a rule that can no longer fail is caught too.
 - PostgreSQL is pinned by digest in the `migrations` service and in `TestcontainersConfiguration.java`. Bump both in
   one commit when a PostgreSQL minor release ships. The `workflows` job fails when they differ or the digest is
   missing.
+- Keycloak is pinned by digest in `TestKeycloak.java` and bumped by hand.
 
 ## Decision records
 

@@ -3,11 +3,8 @@ package io.github.counthouse.api.web;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.github.counthouse.api.ApiTest;
-import io.github.counthouse.contract.MeApi;
-import io.github.counthouse.contract.model.Me;
-import io.github.counthouse.contract.model.Role;
-import io.github.counthouse.contract.model.Tenant;
-import io.github.counthouse.contract.model.User;
+import io.github.counthouse.api.TestKeycloak;
+import io.github.counthouse.api.TestcontainersConfiguration.MigratorDatabase;
 import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -19,8 +16,7 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
-import java.util.function.Supplier;
-import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -42,11 +38,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 @ApiTest
 @ExtendWith(OutputCaptureExtension.class)
-@Import({
-    ProblemDetailsTests.MeController.class,
-    ProblemDetailsTests.ProbeController.class,
-    ProblemDetailsTests.ProbeFilter.class
-})
+@Import({ProblemDetailsTests.ProbeController.class, ProblemDetailsTests.ProbeFilter.class})
 class ProblemDetailsTests {
 
     static final String SECRET = "secret-value-from-the-failure";
@@ -55,7 +47,7 @@ class ProblemDetailsTests {
     RestTestClient client;
 
     @Autowired
-    MeController me;
+    MigratorDatabase migrator;
 
     @Autowired
     MeterRegistry meters;
@@ -63,9 +55,17 @@ class ProblemDetailsTests {
     @LocalServerPort
     int port;
 
-    @AfterEach
-    void reset() {
-        me.answer(MeController::example);
+    // Every path but the error dispatch and the health check needs a token: requests here carry a staff member's.
+    @BeforeEach
+    void signIn() {
+        UUID tenant = migrator.insertTenant("Clinic");
+        String subject = UUID.randomUUID().toString();
+        migrator.insertStaff(tenant, TestKeycloak.get().issuer(), subject);
+        String token = TestKeycloak.get()
+                .sign(TestKeycloak.get().claims(tenant, subject).build());
+        client = client.mutate()
+                .defaultHeaders(headers -> headers.setBearerAuth(token))
+                .build();
     }
 
     @Test
@@ -155,12 +155,8 @@ class ProblemDetailsTests {
 
     @Test
     void controllerFailureIsAServerErrorWithoutItsMessage(CapturedOutput output) {
-        me.answer(() -> {
-            throw new IllegalStateException(SECRET);
-        });
-
         String body = client.get()
-                .uri("/me")
+                .uri("/probe/fail")
                 .exchange()
                 .expectStatus()
                 .isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -173,7 +169,7 @@ class ProblemDetailsTests {
                 .as("stack traces logged")
                 .hasSize(2);
         assertThat(meters.get("http.server.requests")
-                        .tag("uri", "/me")
+                        .tag("uri", "/probe/fail")
                         .tag("status", "500")
                         .tag("exception", "IllegalStateException")
                         .timer()
@@ -276,31 +272,10 @@ class ProblemDetailsTests {
         }
     }
 
-    @TestComponent
-    @RestController
-    static class MeController implements MeApi {
-
-        // A field, not set from the test directly: the bean is a proxy (the interface is @Validated).
-        private volatile Supplier<ResponseEntity<Me>> answer = MeController::example;
-
-        void answer(Supplier<ResponseEntity<Me>> answer) {
-            this.answer = answer;
-        }
-
-        @Override
-        public ResponseEntity<Me> getMe() {
-            return answer.get();
-        }
-
-        static ResponseEntity<Me> example() {
-            var user = new User(UUID.fromString("019a0000-0000-7000-8000-000000000001"), Role.ADMIN);
-            var tenant = new Tenant(
-                    UUID.fromString("019a0000-0000-7000-8000-000000000002"), "Example", "America/Montevideo", "es");
-            return ResponseEntity.ok(new Me(user, tenant));
-        }
-    }
-
-    /** An operation whose only listed media type is the error one, as the generator writes a 204 operation. */
+    /**
+     * An operation whose only listed media type is the error one, as the generator writes a 204 operation, and one
+     * that fails.
+     */
     @TestComponent
     @RestController
     static class ProbeController {
@@ -308,6 +283,11 @@ class ProblemDetailsTests {
         @GetMapping(value = "/probe/no-content", produces = "application/problem+json")
         ResponseEntity<Void> noContent() {
             return ResponseEntity.noContent().build();
+        }
+
+        @GetMapping("/probe/fail")
+        ResponseEntity<Void> fail() {
+            throw new IllegalStateException(SECRET);
         }
     }
 

@@ -5,7 +5,8 @@ anything.
 
 ## Layout
 
-Built so far: `apps/api`, `apps/site` and `contract`. The other folders are created when their work starts.
+Built so far: `apps/api`, `apps/site`, `contract` and the realm file in `infra/keycloak`. The other folders are
+created when their work starts.
 
 - `apps/api`: Spring Boot API, the only owner of the database.
 - `apps/backoffice`: Next.js App Router backoffice for staff.
@@ -18,7 +19,8 @@ Built so far: `apps/api`, `apps/site` and `contract`. The other folders are crea
 
 - `apps/api`: `cd apps/api && ./mvnw -B verify`. Docker must be running: the tests start PostgreSQL 18 through
   Testcontainers, with the production role split: Flyway runs as `counthouse_migrator`, the API as
-  `counthouse_app`. Format Java first with `./mvnw spotless:apply`; the build fails on unformatted code.
+  `counthouse_app`, and Keycloak from `infra/keycloak/realm.json`. Format Java first with `./mvnw spotless:apply`;
+  the build fails on unformatted code.
 - `apps/site`: `npm ci` once at the root, then `npm run lint -w apps/site`, `npm run typecheck -w apps/site`,
   `npm run build -w apps/site` and `npm run check:i18n -w apps/site` (reads the built pages). The build is a static
   export written to `apps/site/out/`. After the build, `npm run test:a11y -w apps/site` runs axe on every built page

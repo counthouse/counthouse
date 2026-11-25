@@ -41,6 +41,17 @@ public class TestcontainersConfiguration {
         };
     }
 
+    /** Keycloak, shared by every context; see {@link TestKeycloak}. */
+    @Bean
+    DynamicPropertyRegistrar keycloak() {
+        return registry -> {
+            registry.add("counthouse.auth.issuer", () -> TestKeycloak.get().issuer());
+            registry.add("counthouse.auth.jwk-set-uri", () -> TestKeycloak.get().jwkSetUri());
+            registry.add("counthouse.auth.client-id", () -> TestKeycloak.CLIENT_ID);
+            registry.add("counthouse.auth.resource", () -> "https://api.example.test");
+        };
+    }
+
     @Bean
     MigratorDatabase migratorDatabase(PostgreSQLContainer postgres) {
         return new MigratorDatabase(JdbcClient.create(
@@ -56,6 +67,57 @@ public class TestcontainersConfiguration {
                             values (?, 'Europe/Berlin', 'es')
                             returning id
                             """).param(name).query(UUID.class).single();
+        }
+
+        public UUID insertStaffMember(UUID tenantId, String role, boolean active) {
+            return asTenant(
+                    tenantId,
+                    () -> jdbc.sql("""
+                            insert into staff_members (tenant_id, display_name, role, active)
+                            values (?, 'Staff member', ?, ?)
+                            returning id
+                            """)
+                            .params(tenantId, role, active)
+                            .query(UUID.class)
+                            .single());
+        }
+
+        public UUID insertLogin(UUID tenantId, String issuer, String subject, UUID staffMemberId) {
+            return asTenant(
+                    tenantId,
+                    () -> jdbc.sql("""
+                            insert into logins (tenant_id, issuer, subject, kind, staff_member_id)
+                            values (?, ?, ?, 'PERSON', ?)
+                            returning id
+                            """)
+                            .params(tenantId, issuer, subject, staffMemberId)
+                            .query(UUID.class)
+                            .single());
+        }
+
+        /** A tenant with an active admin whose login is the given Keycloak subject; returns the staff member's id. */
+        public UUID insertStaff(UUID tenantId, String issuer, String subject) {
+            UUID staffMemberId = insertStaffMember(tenantId, "ADMIN", true);
+            insertLogin(tenantId, issuer, subject, staffMemberId);
+            return staffMemberId;
+        }
+
+        public void setActive(UUID tenantId, UUID staffMemberId, boolean active) {
+            asTenant(
+                    tenantId,
+                    () -> jdbc.sql("update staff_members set active = ? where id = ?")
+                            .params(active, staffMemberId)
+                            .update());
+        }
+
+        // Tenant tables are forced, so the owner also needs a tenant.
+        public <T> T asTenant(UUID tenantId, java.util.function.Supplier<T> work) {
+            setTenant(tenantId.toString());
+            try {
+                return work.get();
+            } finally {
+                setTenant("");
+            }
         }
 
         /** Inserts a probe row; rls_probe is forced, so the owner also needs a tenant. */
