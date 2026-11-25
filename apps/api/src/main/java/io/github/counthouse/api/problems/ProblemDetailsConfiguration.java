@@ -1,4 +1,4 @@
-package io.github.counthouse.api.web;
+package io.github.counthouse.api.problems;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.ProblemDetailsConfigurer;

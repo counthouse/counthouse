@@ -14,15 +14,16 @@ class ModularityTests {
         ApplicationModules.of(ApiApplication.class).verify();
     }
 
-    /** The contract's generated types are the web layer's: services and entities keep their own. */
+    /** Generated contract types stay in a module's {@code web} package; services and entities keep their own. */
     @Test
-    void onlyTheWebLayerUsesTheGeneratedContract() {
+    void onlyWebPackagesUseTheGeneratedContract() {
         noClasses()
                 .that()
-                .resideOutsideOfPackage("io.github.counthouse.api.web..")
+                .resideOutsideOfPackage("io.github.counthouse.api..web..")
                 .should()
                 .dependOnClassesThat()
                 .resideInAPackage("io.github.counthouse.contract..")
+                .because("the contract is the HTTP boundary: each module maps it to its own types in its web package")
                 .check(new ClassFileImporter()
                         .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
                         .importPackages("io.github.counthouse.api"));

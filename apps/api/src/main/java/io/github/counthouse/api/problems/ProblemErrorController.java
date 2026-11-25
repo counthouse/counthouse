@@ -1,4 +1,4 @@
-package io.github.counthouse.api.web;
+package io.github.counthouse.api.problems;
 
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.RequestDispatcher;

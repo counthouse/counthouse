@@ -1,4 +1,4 @@
-package io.github.counthouse.api.web;
+package io.github.counthouse.api.identity.web;
 
 import io.github.counthouse.api.identity.Actor;
 import io.github.counthouse.api.identity.CurrentActor;

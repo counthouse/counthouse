@@ -1,4 +1,4 @@
-package io.github.counthouse.api.web;
+package io.github.counthouse.api.problems;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
