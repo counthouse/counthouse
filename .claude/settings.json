@@ -22,6 +22,15 @@
             "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/frozen-migrations.mjs"
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/quiet-maven.mjs"
+          }
+        ]
       }
     ],
     "PostToolUse": [
@@ -30,7 +39,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/mark-api-edit.mjs"
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/mark-edit.mjs"
           }
         ]
       }
@@ -41,7 +50,12 @@
           {
             "type": "command",
             "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/api-build.mjs",
-            "timeout": 120
+            "timeout": 180
+          },
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/site-check.mjs",
+            "timeout": 180
           }
         ]
       }

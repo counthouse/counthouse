@@ -186,10 +186,14 @@ give early feedback; CI and the branch ruleset on `main` stay the guard.
 - **Frozen migrations.** A hook blocks an edit to a migration that exists on `origin/main`. Edits made through the
   shell, renames and a stale `origin/main` are not seen, and a crash of the hook lets the edit through; the
   `migrations` job checks every pull request.
-- **API build at the end of a turn.** When a session has edited `apps/api`, a hook runs
-  `./mvnw -B -o test-compile` as the agent stops and reports formatting failures and compiler warnings and errors.
-  A failing build is reported once; the hook stays quiet until the next edit to `apps/api`. Edits made through the
-  shell are not seen; the `api` job runs the same checks and the tests.
+- **API build at the end of a turn.** When a session has edited `apps/api`, a hook applies Spotless formatting, then
+  runs `./mvnw -B -o test-compile` as the agent stops and reports compiler warnings and errors. A failing build is
+  reported once; the hook stays quiet until the next edit to `apps/api`. Edits made through the shell are not seen;
+  the `api` job runs the same checks and the tests.
+- **Site checks at the end of a turn.** The same for `apps/site`: its type check and lint, reported once.
+- **Quiet Maven.** A hook blocks the agent's raw `./mvnw` runs of verify, test, package and install, and points to
+  `npm run api:verify` and `npm run api:mvn`, which print only failures and the path of the full log. Runs with
+  `-q` and quick goals such as `spotless:apply` pass. A full Maven log costs the agent thousands of tokens.
 - The hooks are tested with `npm run test:hooks`, which the `agent-hooks` job runs.
 
 Some areas are reviewed line by line, whoever wrote the change: the contract, exclusion constraints and their

@@ -1,5 +1,6 @@
-// Stop hook: when this session edited apps/api (marked by mark-api-edit.mjs), runs the Spotless check and compiles
-// main and test code with -Werror in that checkout. The mark is cleared by every build, so a failure is reported
+// Stop hook: when this session edited apps/api (marked by mark-edit.mjs), applies Spotless formatting, then runs the
+// Spotless check and compiles main and test code with -Werror in that checkout. Formatting is applied, not reported,
+// so a formatting slip never costs the agent a turn. The mark is cleared by every build, so a failure is reported
 // once and later turns stay quiet until the API is edited again. CI's api job runs the same checks and the tests.
 // Any failure of the hook itself also blocks, with its message, so a broken hook is never silent.
 import { spawnSync } from "node:child_process";
@@ -20,9 +21,16 @@ try {
   const root = readFileSync(mark, "utf8");
   rmSync(mark);
 
-  // Offline: no network wait. The Spotless check is bound to validate, so it runs before compiling.
+  // Offline: no network wait. A failed apply is not reported here: the check below fails with the real reason.
+  const api = path.join(root, "apps/api");
+  const format = spawnSync("./mvnw", ["-B", "-o", "-q", "spotless:apply"], {
+    cwd: api,
+    encoding: "utf8",
+  });
+  if (format.error) throw format.error;
+  // The Spotless check is bound to validate, so it runs before compiling.
   const run = spawnSync("./mvnw", ["-B", "-o", "test-compile"], {
-    cwd: path.join(root, "apps/api"),
+    cwd: api,
     encoding: "utf8",
   });
   if (run.error) throw run.error;
@@ -43,7 +51,7 @@ try {
     report.push(...run.stderr.trimEnd().split("\n").slice(-20));
   console.error(
     [
-      "apps/api failed `./mvnw -B -o test-compile`. Fix formatting with `./mvnw spotless:apply`; if offline resolution failed, run `./mvnw -B verify` once.",
+      "apps/api failed `./mvnw -B -o test-compile` (formatting was already applied). If offline resolution failed, run `npm run api:verify` once.",
       ...report.slice(0, 40),
     ].join("\n"),
   );
