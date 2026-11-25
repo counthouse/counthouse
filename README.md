@@ -5,7 +5,8 @@ vertical. One monorepo with a Spring Boot API, a Next.js backoffice and one Open
 generated from, plus the static website of the first business that uses it.
 
 The core is domain-neutral: tenants, users, providers, services, schedule, appointments and customers. Features for
-one kind of business live in their own module and are built only for a real customer.
+one kind of business live in their own module and are built only for a real customer. The API's modules and their
+dependencies are drawn in [apps/api/docs/modules.md](apps/api/docs/modules.md), generated from the code.
 
 ## Status
 
