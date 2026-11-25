@@ -24,7 +24,6 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.RestClient;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
-import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.utility.MountableFile;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
@@ -49,10 +48,7 @@ public final class TestKeycloak {
     private static final String ADMIN = "admin";
     private static final JsonMapper JSON = JsonMapper.shared();
 
-    // Bumped by hand, like PostgreSQL: Dependabot does not read image names in Java.
-    private static final GenericContainer<?> CONTAINER = new GenericContainer<>(
-                    DockerImageName.parse(
-                            "quay.io/keycloak/keycloak:26.8.2@sha256:7e66a96e4739239070aeaf72e4c5decf0f7f682cfc725b9f7ea2b336eaba38b3"))
+    private static final GenericContainer<?> CONTAINER = new GenericContainer<>(PinnedImage.of("keycloak"))
             .withEnv("KC_BOOTSTRAP_ADMIN_USERNAME", ADMIN)
             .withEnv("KC_BOOTSTRAP_ADMIN_PASSWORD", ADMIN)
             .withCopyFileToContainer(

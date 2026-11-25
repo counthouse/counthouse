@@ -36,3 +36,18 @@ updates:
       prefix: build
     cooldown:
       default-days: 7
+
+  # The images the tests and CI run, one Dockerfile each.
+  - package-ecosystem: docker
+    directory: /infra/images
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: build(infra)
+    cooldown:
+      default-days: 7
+    ignore:
+      # The tests run production's PostgreSQL major; moving to a new one is a
+      # decision, not a routine update.
+      - dependency-name: postgres
+        update-types: ["version-update:semver-major"]

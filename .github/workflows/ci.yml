@@ -93,17 +93,6 @@ jobs:
     if: needs.changes.outputs.api == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    services:
-      postgres:
-        # Same image as TestcontainersConfiguration.java; the workflows job
-        # checks they match.
-        image: postgres:18.7@sha256:f5cbc081c25690710f3fc6f4c61a7565382bae01ca0d0f2028a53d7926b85a20
-        env:
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: counthouse
-        ports: ["5432:5432"]
-        options: >-
-          --health-cmd pg_isready --health-interval 2s --health-timeout 5s --health-retries 15
     defaults:
       run:
         working-directory: apps/api
@@ -112,6 +101,15 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+      # A step, not a service: a service image can only come from the workflow
+      # text or an expression, and zizmor flags an expression as unpinned.
+      # pg_isready over TCP skips the entrypoint's socket-only init server.
+      - name: Start PostgreSQL
+        run: |
+          image=$(sed -n 's/^FROM //p' ../../infra/images/postgres.Dockerfile)
+          docker run -d --name postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=counthouse \
+            -p 5432:5432 "$image"
+          timeout 60 sh -c 'until docker exec postgres pg_isready -h 127.0.0.1 -U postgres -q; do sleep 1; done'
       - uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
         with:
           distribution: temurin
@@ -130,9 +128,7 @@ jobs:
       # The same roles as the tests: migrations run as the migrator, which owns
       # the database but is not a superuser.
       - name: Create the database roles
-        env:
-          POSTGRES: ${{ job.services.postgres.id }}
-        run: docker exec -i "$POSTGRES" psql -v ON_ERROR_STOP=1 -U postgres -d counthouse < src/test/resources/db/roles.sql
+        run: docker exec -i postgres psql -v ON_ERROR_STOP=1 -U postgres -d counthouse < src/test/resources/db/roles.sql
       # Pull requests migrate from their base; pushes to main from the previous
       # main commit.
       - name: Migrate from the base to this commit
@@ -218,8 +214,8 @@ jobs:
           done
           # Only .git is mounted, so allowlists in the checked-out tree are not
           # read; -m scans what merge commits add.
-          docker run --rm --user "$(id -u):$(id -g)" -v "$PWD/.git:/repo:ro" \
-            ghcr.io/gitleaks/gitleaks:v8.30.1@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f \
+          image=$(sed -n 's/^FROM //p' infra/images/gitleaks.Dockerfile)
+          docker run --rm --user "$(id -u):$(id -g)" -v "$PWD/.git:/repo:ro" "$image" \
             git /repo --log-opts="-m $from..$to" --ignore-gitleaks-allow --redact --verbose --no-banner
 
   # Prettier formats every file it has a parser for; Java is checked by the
@@ -258,10 +254,10 @@ jobs:
       - run: npm run test:hooks
 
   # Lints the workflows: actionlint for syntax, expressions and shell
-  # scripts, zizmor for security issues, and a check of the PostgreSQL pin in
-  # the migrations service. Runs on every change, like `format`: zizmor's
-  # online audits can fail on a new advisory without a workflow edit. Each
-  # check runs even when an earlier one failed, so one run reports them all.
+  # scripts, zizmor for security issues, and a check of the image pins.
+  # Runs on every change, like `format`: zizmor's online audits can fail on
+  # a new advisory without a workflow edit. Each check runs even when an
+  # earlier one failed, so one run reports them all.
   workflows:
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -269,12 +265,10 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      # Bumped by hand: Dependabot does not read images in `run:` scripts.
       - name: Run actionlint
         run: |
-          docker run --rm -v "$PWD:/repo:ro" --workdir /repo \
-            rhysd/actionlint:1.7.12@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667 \
-            -color
+          image=$(sed -n 's/^FROM //p' infra/images/actionlint.Dockerfile)
+          docker run --rm -v "$PWD:/repo:ro" --workdir /repo "$image" -color
       # `latest` is the zizmor version locked in this action release, so
       # Dependabot's update of the action also updates zizmor.
       - uses: zizmorcore/zizmor-action@bd12b495c90993a4301c73398142281a61499af3 # v0.9.0
@@ -286,18 +280,32 @@ jobs:
           min-confidence: low
           advanced-security: false
           annotations: true
-      # The migrations service and the API tests run the same PostgreSQL
-      # build, pinned by digest.
-      - name: Check the PostgreSQL images match
+      # Each image is pinned in one file under infra/images, which Dependabot
+      # updates and PinnedImage.java reads. `if`, not `!`: a `!` command
+      # never fails a step under `bash -e`.
+      - name: Check the image pins
         if: ${{ !cancelled() }}
         run: |
-          ci=$(sed -n 's/^ *image: \(postgres:.*\)$/\1/p' .github/workflows/ci.yml)
-          tests=$(grep -oE '"postgres:[^"]+"' \
-            apps/api/src/test/java/io/github/counthouse/api/TestcontainersConfiguration.java | tr -d '"')
-          echo "ci.yml: $ci"
-          echo "tests:  $tests"
-          case "$ci" in *@sha256:*) ;; *) echo "Not pinned by digest"; exit 1 ;; esac
-          [ "$ci" = "$tests" ] || { echo "The images differ"; exit 1; }
+          status=0
+          for f in infra/images/*.Dockerfile; do
+            # grep -c also counts a last line without a newline; wc -l does not.
+            if [ "$(wc -l < "$f")" -ne 1 ] || [ "$(grep -c '' "$f")" -ne 1 ] ||
+              ! grep -qxE 'FROM [a-z0-9./_-]+:[A-Za-z0-9_][A-Za-z0-9_.-]*@sha256:[0-9a-f]{64}' "$f"; then
+              echo "$f: not one line FROM <image>:<tag>@sha256:<digest>"
+              status=1
+              continue
+            fi
+            ref=$(sed 's/^FROM \(.*\)@sha256:.*/\1/' "$f")
+            if git grep -nF -e "$ref" -- . ':!infra/images'; then
+              echo "$ref is pinned outside infra/images"
+              status=1
+            fi
+          done
+          if git grep -nE '@sha256:[0-9a-f]{64}' -- . ':!infra/images'; then
+            echo "A digest outside infra/images"
+            status=1
+          fi
+          exit "$status"
 
   # The only required check: it fails when any job failed or was cancelled,
   # and passes when jobs succeeded or were skipped as not affected. New jobs

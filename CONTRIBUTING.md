@@ -167,12 +167,12 @@ tables that each break it, so a rule that can no longer fail is caught too.
 
 - Actions are pinned by commit SHA and updated by Dependabot. zizmor's version comes with the `zizmor-action`
   release.
-- Images run from `run:` scripts (actionlint, gitleaks) are pinned by digest and bumped by hand: Dependabot does not
-  read them.
-- PostgreSQL is pinned by digest in the `migrations` service and in `TestcontainersConfiguration.java`. Bump both in
-  one commit when a PostgreSQL minor release ships. The `workflows` job fails when they differ or the digest is
-  missing.
-- Keycloak is pinned by digest in `TestKeycloak.java` and bumped by hand.
+- The container images the tests and CI run (PostgreSQL, Keycloak, actionlint, gitleaks) are pinned by tag and
+  digest in `infra/images/`, one Dockerfile each holding a single `FROM` line, and updated by Dependabot. PostgreSQL
+  major versions are left out of the updates: the tests run production's major. The tests read the files through
+  `PinnedImage`, and the workflow steps with `sed`; the `migrations` job starts PostgreSQL in a step rather than as a
+  service, because zizmor flags a service image taken from an expression. The `workflows` job fails when a file is
+  not that single pinned line, or when an image's tag or any digest appears outside `infra/images/`.
 
 ## Decision records
 
