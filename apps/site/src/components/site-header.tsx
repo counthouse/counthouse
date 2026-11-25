@@ -49,7 +49,7 @@ export function SiteHeader({
       }
       actions={
         <>
-          <LanguageLinks current={locale} show="others" />
+          <LanguageLinks locale={locale} />
           <ButtonLink
             href={whatsappHref(clinic, strings.whatsappMessage)}
             variant="primary"
