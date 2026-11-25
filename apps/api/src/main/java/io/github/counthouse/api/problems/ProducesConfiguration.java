@@ -1,4 +1,4 @@
-package io.github.counthouse.api.web;
+package io.github.counthouse.api.problems;
 
 import java.lang.reflect.Method;
 import org.jspecify.annotations.Nullable;

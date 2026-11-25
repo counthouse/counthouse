@@ -87,7 +87,7 @@ Keycloak started from `infra/keycloak/realm.json` (`TestKeycloak`), shared by th
   with a key Keycloak publishes. Each rejected case has a test named after the threat (`TokenThreatTests`).
 - The tenant is the token's one organization alias, in canonical UUID form. The staff member is the active one whose
   login matches the token's issuer and subject in that tenant; code reads it with `CurrentActor.get()`. Generated
-  contract types stay in the web layer (`onlyTheWebLayerUsesTheGeneratedContract`).
+  contract types stay in each module's `web` package (`onlyWebPackagesUseTheGeneratedContract`).
 - A rejected token is a 401 problem with `WWW-Authenticate: Bearer error="invalid_token"` and no description; no
   token is a 401 with `Bearer`. Tokens and subjects are never logged (`keepsTokensAndSubjectsOutOfTheLogs`).
 - Keycloak's keys are cached and fetched at most once per refresh interval. When a fetch fails, the last keys stay
