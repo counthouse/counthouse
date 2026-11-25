@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestComponent;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
 import org.springframework.context.annotation.Import;
@@ -23,7 +24,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 import org.springframework.web.bind.annotation.RestController;
 
+// The shape of the generated models only: authentication is tested on a real server.
 @WebMvcTest(controllers = GeneratedContractTests.MeController.class)
+@AutoConfigureMockMvc(addFilters = false)
 @Import(GeneratedContractTests.MeController.class)
 class GeneratedContractTests {
 

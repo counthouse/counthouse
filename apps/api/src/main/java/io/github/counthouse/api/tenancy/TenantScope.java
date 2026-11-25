@@ -18,14 +18,23 @@ public final class TenantScope {
 
     private TenantScope() {}
 
-    public static void run(UUID tenantId, Runnable work) {
+    public static <X extends Exception> void run(UUID tenantId, Work<X> work) throws X {
         requireSameOrUnbound(tenantId);
-        ScopedValue.where(TENANT, tenantId).run(work);
+        ScopedValue.where(TENANT, tenantId).call(() -> {
+            work.run();
+            return null;
+        });
     }
 
     public static <T> T call(UUID tenantId, Supplier<T> work) {
         requireSameOrUnbound(tenantId);
         return ScopedValue.where(TENANT, tenantId).call(work::get);
+    }
+
+    /** Work that may throw a checked exception, such as the rest of a servlet filter chain. */
+    @FunctionalInterface
+    public interface Work<X extends Exception> {
+        void run() throws X;
     }
 
     private static void requireSameOrUnbound(UUID tenantId) {
