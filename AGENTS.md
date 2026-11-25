@@ -17,10 +17,12 @@ created when their work starts.
 
 ## Build and test
 
-- `apps/api`: `cd apps/api && ./mvnw -B verify`. Docker must be running: the tests start PostgreSQL 18 through
-  Testcontainers, with the production role split: Flyway runs as `counthouse_migrator`, the API as
-  `counthouse_app`, and Keycloak from `infra/keycloak/realm.json`. Format Java first with `./mvnw spotless:apply`;
-  the build fails on unformatted code.
+- `apps/api`: `npm run api:verify` at the root, or `npm run api:mvn -- <goals and flags>` for other goals (for
+  example `test -Dtest=TenantIsolationIT`). Both print only the result, failing tests and errors, plus the path of
+  the full log; a hook blocks raw `./mvnw` runs of verify, test, package and install. Docker must be running: the
+  tests start PostgreSQL 18 through Testcontainers, with the production role split: Flyway runs as
+  `counthouse_migrator`, the API as `counthouse_app`, and Keycloak from `infra/keycloak/realm.json`. The Stop hook
+  applies Spotless formatting itself.
 - `apps/site`: `npm ci` once at the root, then `npm run lint -w apps/site`, `npm run typecheck -w apps/site`,
   `npm run build -w apps/site` and `npm run check:i18n -w apps/site` (reads the built pages). The build is a static
   export written to `apps/site/out/`. After the build, `npm run test:a11y -w apps/site` runs axe on every built page

@@ -6,6 +6,7 @@ import {
   copyFileSync,
   symlinkSync,
   existsSync,
+  readFileSync,
   mkdtempSync,
   writeFileSync,
   mkdirSync,
@@ -49,7 +50,9 @@ function repo() {
   for (const name of [
     "repo-path.mjs",
     "frozen-migrations.mjs",
-    "mark-api-edit.mjs",
+    "mark-edit.mjs",
+    "site-check.mjs",
+    "quiet-maven.mjs",
     "api-build.mjs",
   ]) {
     copyFileSync(
@@ -156,7 +159,7 @@ test("blocks a frozen migration reached through a symlink", () => {
 });
 
 const markEdit = (r, file) =>
-  hook("mark-api-edit.mjs", r.root, {
+  hook("mark-edit.mjs", r.root, {
     tool_input: { file_path: path.join(r.root, file) },
   });
 const marked = (r) =>
@@ -241,7 +244,7 @@ test("works in a worktree: blocks the frozen migration and builds the worktree",
     "#!/bin/sh\ntouch ran-in-worktree\n",
   );
   chmodSync(path.join(wt, "apps/api/mvnw"), 0o755);
-  hook("mark-api-edit.mjs", r.root, {
+  hook("mark-edit.mjs", r.root, {
     tool_input: { file_path: path.join(wt, "apps/api/A.java") },
   });
   assert.equal(stop(r).status, 0);
@@ -260,4 +263,115 @@ test("Stop: shows the wrapper's own error when Maven never started", () => {
   const result = stop(r);
   assert.equal(result.status, 2);
   assert.match(result.stderr, /JAVA_HOME is not set/);
+});
+
+// Formatting is applied before the check, so it never costs a turn.
+test("Stop: applies Spotless before compiling", () => {
+  const r = repo();
+  r.write("apps/api/mvnw", '#!/bin/sh\necho "$*" >> calls\nexit 0\n');
+  chmodSync(path.join(r.root, "apps/api/mvnw"), 0o755);
+  markEdit(r, "apps/api/A.java");
+  assert.equal(stop(r).status, 0);
+  const calls = readFileSync(path.join(r.root, "apps/api/calls"), "utf8");
+  assert.match(calls, /spotless:apply[\s\S]*test-compile/);
+});
+
+const siteStop = (r, input = {}) => hook("site-check.mjs", r.root, input);
+// Stands in for npm: records the script it ran, prints the given output and exits with the given status.
+function fakeNpm(r, stdout, status) {
+  const bin = path.join(r.tmp, "bin");
+  mkdirSync(bin, { recursive: true });
+  writeFileSync(
+    path.join(bin, "npm"),
+    `#!/bin/sh\necho "$*" >> "${r.tmp}/npm-calls"\ncat <<'OUT'\n${stdout}\nOUT\nexit ${status}\n`,
+  );
+  chmodSync(path.join(bin, "npm"), 0o755);
+  return { ...process.env, PATH: `${bin}:${process.env.PATH}` };
+}
+const siteHook = (r, env, input = {}) =>
+  spawnSync("node", [path.join(r.root, ".claude/hooks/site-check.mjs")], {
+    input: JSON.stringify({
+      cwd: path.dirname(r.root),
+      session_id: "s1",
+      ...input,
+    }),
+    env: { ...env, TMPDIR: path.dirname(r.root) },
+    encoding: "utf8",
+  });
+
+test("site Stop: checks only sessions that edited apps/site", () => {
+  const r = repo();
+  const env = fakeNpm(r, "src/a.tsx(1,1): error TS2322: nope", 1);
+  markEdit(r, "apps/api/A.java");
+  assert.equal(siteHook(r, env).status, 0);
+  assert.equal(existsSync(path.join(r.tmp, "npm-calls")), false);
+});
+
+test("site Stop: reports type errors once, then stays quiet", () => {
+  const r = repo();
+  const env = fakeNpm(
+    r,
+    [
+      "> next typegen",
+      "src/a.tsx(1,1): error TS2322: Type 'x' is not assignable",
+      "npm notice",
+    ].join("\n"),
+    1,
+  );
+  markEdit(r, "apps/site/src/a.tsx");
+  const result = siteHook(r, env);
+  assert.equal(result.status, 2);
+  assert.match(result.stderr, /error TS2322/);
+  assert.doesNotMatch(result.stderr, /npm notice|next typegen/);
+  assert.equal(siteHook(r, env).status, 0);
+});
+
+test("site Stop: a passing check clears the mark", () => {
+  const r = repo();
+  const env = fakeNpm(r, "", 0);
+  markEdit(r, "apps/site/src/a.tsx");
+  assert.equal(siteHook(r, env).status, 0);
+  assert.match(
+    readFileSync(path.join(r.tmp, "npm-calls"), "utf8"),
+    /typecheck[\s\S]*lint/,
+  );
+});
+
+const bash = (r, command) =>
+  hook("quiet-maven.mjs", r.root, { tool_input: { command } });
+
+test("blocks raw Maven runs of heavy goals in any form", () => {
+  const r = repo();
+  for (const command of [
+    "./mvnw verify",
+    "cd apps/api && ./mvnw -B verify",
+    "./mvnw -Dtest=FooIT test",
+    "mvn clean install",
+    "apps/api/mvnw -B package",
+    "(cd apps/api; ./mvnw verify)",
+  ]) {
+    const result = bash(r, command);
+    assert.equal(result.status, 2, command);
+    assert.match(result.stderr, /npm run api:mvn/);
+  }
+});
+
+test("allows quick goals, quiet runs and the npm scripts", () => {
+  const r = repo();
+  for (const command of [
+    "./mvnw spotless:apply",
+    "./mvnw -B -o test-compile",
+    "./mvnw -q verify",
+    "npm run api:verify",
+    "npm run api:mvn -- test -Dtest=FooIT",
+    "grep -r mvnw .github",
+  ]) {
+    assert.equal(bash(r, command).status, 0, command);
+  }
+});
+
+test("marks a new file in a folder that does not exist yet", () => {
+  const r = repo();
+  markEdit(r, "apps/api/src/main/java/new/pkg/A.java");
+  assert.equal(marked(r), true);
 });

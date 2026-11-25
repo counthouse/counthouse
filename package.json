@@ -7,7 +7,9 @@
   "scripts": {
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test:hooks": "node --test '.claude/hooks/*.test.mjs'"
+    "test:hooks": "node --test '.claude/hooks/*.test.mjs'",
+    "api:verify": "node scripts/api-maven.mjs verify",
+    "api:mvn": "node scripts/api-maven.mjs"
   },
   "devDependencies": {
     "prettier": "3.10.1"
