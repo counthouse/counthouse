@@ -149,6 +149,8 @@ tables that each break it, so a rule that can no longer fail is caught too.
 
 ## Workflows
 
+- The `api` and `migrations` jobs run on every change except a pull request whose changed files are all under
+  `apps/site/` or `docs/`, or Markdown files at the repository root. A moved file counts at both paths.
 - The `workflows` job lints `.github/workflows` on every pull request. actionlint checks syntax, expressions and
   shell scripts (through shellcheck). zizmor checks security with its regular persona; any finding of low severity
   or above fails the job. zizmor's online audits, such as known-vulnerable actions, can fail a pull request that

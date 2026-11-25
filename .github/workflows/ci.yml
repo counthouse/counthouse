@@ -40,9 +40,12 @@ jobs:
             echo "site=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          changed=$(git diff --name-only "$BASE...$HEAD")
+          # Both sides of a move, so a file moved out of a watched path counts.
+          changed=$(git diff --name-only --no-renames "$BASE...$HEAD")
           echo "$changed"
-          if echo "$changed" | grep -qE '^(apps/api|contract|\.github)/'; then
+          # The API jobs are skipped only when every changed file is known not
+          # to affect the API: a file the API reads anywhere else still runs them.
+          if echo "$changed" | grep -qvE '^(apps/site/|docs/|[^/]+\.md$)'; then
             echo "api=true" >> "$GITHUB_OUTPUT"
           else
             echo "api=false" >> "$GITHUB_OUTPUT"
