@@ -16,6 +16,8 @@ export interface Clinic {
   phone: string;
   /** How the phone number is written for people. */
   phoneLabel: string;
+  /** The same number as dialled inside Uruguay. */
+  phoneLabelLocal: string;
   address: string;
   mapUrl: string;
   /** For canonical links. `.invalid` never resolves (RFC 2606) until the deploy sets the domain. */
@@ -31,6 +33,7 @@ export const clinic: Clinic = {
   },
   phone: "59898657295",
   phoneLabel: "+598 98 657 295",
+  phoneLabelLocal: "098 657 295",
   address: "Av. Sarandí 711, sala 2, Rivera, Uruguay",
   mapUrl: "https://maps.app.goo.gl/dD1HNzFkP1Jk3vMM8",
   siteUrl: "https://anima.invalid",

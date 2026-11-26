@@ -41,7 +41,7 @@ export function SiteFooter({
                 label: strings.call(clinic.phoneLabel),
                 href: telHref(clinic),
               },
-              { label: strings.directions, href: clinic.mapUrl },
+              { label: strings.seeOnMap, href: clinic.mapUrl },
             ].map(({ label, href }) => (
               <li key={href}>
                 <TextLink href={href} className={stackedLinkClass}>

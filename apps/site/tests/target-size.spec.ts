@@ -12,6 +12,12 @@ async function targets(page: Page) {
     .evaluateAll((elements) =>
       elements
         .filter((element) => !element.closest("p"))
+        // The skip link is clipped to nothing until focused; skip-link.spec.ts measures it focused.
+        .filter(
+          (element) =>
+            element.getAttribute("href") !== "#contenido" ||
+            element === document.activeElement,
+        )
         .map((element) => {
           const { left, top, right, bottom } = element.getBoundingClientRect();
           return {

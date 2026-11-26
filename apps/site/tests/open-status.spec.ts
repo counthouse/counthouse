@@ -72,7 +72,7 @@ for (const { path, strings } of languages) {
 for (const { path, strings } of languages)
   test(`${path} reads each range with a word, not a dash`, async ({ page }) => {
     await page.goto(path);
-    const tree = await page.locator("main dl").ariaSnapshot();
+    const tree = await page.locator("[data-hours]").ariaSnapshot();
     expect(tree).toContain(`9:00${strings.rangeTo}12:00`);
     expect(tree).not.toContain("–");
   });
@@ -85,7 +85,7 @@ test.describe("without JavaScript", () => {
       // With JavaScript off, the page is the built HTML.
       await expect(status(page)).toHaveCount(1);
       await expect(status(page)).toBeEmpty();
-      await expect(page.locator("main dl")).toContainText(
+      await expect(page.locator("[data-hours]")).toContainText(
         strings.emergenciesOnly,
       );
     });

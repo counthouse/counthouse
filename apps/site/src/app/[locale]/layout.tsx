@@ -1,3 +1,4 @@
+import { focusRing, targetSize } from "@nicolassancho/ui";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
@@ -13,7 +14,7 @@ export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
 }
 
-// No `alternates` here: every page below a layout inherits its value.
+// No `alternates` or `description` here: every page below a layout would inherit its value.
 export async function generateMetadata({
   params,
 }: LayoutProps<"/[locale]">): Promise<Metadata> {
@@ -22,7 +23,6 @@ export async function generateMetadata({
   return {
     metadataBase: new URL(clinic.siteUrl),
     title: clinic.fullName,
-    description: getStrings(locale).description,
   };
 }
 
@@ -35,8 +35,14 @@ export default async function LocaleLayout({
   const strings = getStrings(locale);
   return (
     <Document lang={htmlLang[locale]}>
+      <a
+        href="#contenido"
+        className={`sr-only z-30 items-center rounded-sm border border-neutral-400 bg-surface font-semibold focus:px-4 text-neutral-950 focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:inline-flex ${targetSize} ${focusRing}`}
+      >
+        {strings.skipToContent}
+      </a>
       <SiteHeader clinic={clinic} locale={locale} strings={strings} />
-      {children}
+      <main className="flex-1">{children}</main>
       <SiteFooter clinic={clinic} locale={locale} strings={strings} />
     </Document>
   );
