@@ -24,7 +24,7 @@ export function SiteFooter({
       navLabel={strings.footerNav}
       languageTitle={strings.language}
       // Room for the fixed WhatsApp link on phones, so it never covers the legal line.
-      className="pb-20 md:pb-0"
+      className="pb-12 md:pb-0"
       brand={
         <address className="flex flex-col gap-2 not-italic">
           <p className="font-display text-xl font-medium text-neutral-950">
