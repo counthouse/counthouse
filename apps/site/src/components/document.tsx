@@ -28,7 +28,8 @@ export function Document({
   children: ReactNode;
 }) {
   return (
-    <html lang={lang}>
+    // Keeps focus scrolls clear of the WhatsApp link, fixed below `md` (site-header.tsx); WCAG 2.4.11.
+    <html lang={lang} className="max-md:scroll-pb-22">
       <body className="flex min-h-dvh flex-col bg-surface font-sans text-neutral-900 antialiased">
         {/* `href` and `precedence` make React move it into `<head>`. */}
         <style href="brand" precedence="brand">
