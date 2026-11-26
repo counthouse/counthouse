@@ -57,3 +57,22 @@ for (const { path, locale } of localePages) {
     );
   });
 }
+
+// From md the language link sits beside the large WhatsApp button; 8 px read as one cramped group.
+for (const width of [940, 1280])
+  test(`the header language link is at least 24 px from WhatsApp at ${width} px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 800 });
+    await page.goto("/es/");
+    const header = page.locator("header");
+    const language = await header
+      .getByRole("link", { name: "Português" })
+      .boundingBox();
+    const whatsapp = await header
+      .getByRole("link", { name: "WhatsApp" })
+      .boundingBox();
+    expect(
+      whatsapp!.x - (language!.x + language!.width),
+    ).toBeGreaterThanOrEqual(24);
+  });
