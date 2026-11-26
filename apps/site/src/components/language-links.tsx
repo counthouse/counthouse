@@ -17,7 +17,8 @@ import {
 export function LanguageLinks({ locale }: { locale: Locale }) {
   const pathname = usePathname();
   return (
-    <ul className="flex flex-col gap-2">
+    // From md the WhatsApp button sits beside it in the header: 8 px of the library's actions gap plus 16 px.
+    <ul className="flex flex-col gap-2 md:me-4">
       {locales
         .filter((other) => other !== locale)
         .map((other) => (
