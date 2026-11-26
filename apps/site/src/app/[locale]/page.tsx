@@ -30,12 +30,10 @@ const actionClass = "w-full justify-center sm:w-auto";
 
 // Heading on the left, content on the right from `md`.
 function Section({
-  id,
   title,
   intro,
   children,
 }: {
-  id: string;
   title: string;
   intro?: ReactNode;
   children: ReactNode;
@@ -43,13 +41,10 @@ function Section({
   return (
     <Container
       as="section"
-      aria-labelledby={`${id}-title`}
       className="grid grid-cols-1 gap-6 py-12 md:grid-cols-[4fr_8fr] md:gap-16 md:py-24"
     >
       <div className="flex flex-col gap-4">
-        <h2 id={`${id}-title`} className={h2Class}>
-          {title}
-        </h2>
+        <h2 className={h2Class}>{title}</h2>
         {intro}
       </div>
       {children}
@@ -65,14 +60,15 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
     <>
       <Container
         as="section"
-        aria-labelledby="hero-title"
         className="grid grid-cols-1 gap-10 pt-10 pb-12 md:grid-cols-[7fr_5fr] md:items-start md:gap-16 md:pt-18 md:pb-20"
       >
         <div className="flex flex-col gap-6">
           <h1
-            id="hero-title"
+            // The skip link's target: a magnifier follows focus to it, which `main` cannot take.
+            id="contenido"
+            tabIndex={-1}
             // `hyphens-auto` breaks a word too long for a narrow screen with a hyphen, in the page's `lang`.
-            className="max-w-[20ch] font-display text-[clamp(2rem,1.5rem+2.5vw,3.25rem)] leading-[1.12] font-medium tracking-[-0.01em] wrap-break-word hyphens-auto text-balance text-neutral-950"
+            className="max-w-[20ch] scroll-mt-8 font-display text-[clamp(2rem,1.5rem+2.5vw,3.25rem)] leading-[1.12] font-medium tracking-[-0.01em] wrap-break-word hyphens-auto text-balance text-neutral-950"
           >
             {strings.heroTitle}
           </h1>
@@ -130,9 +126,8 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
               {strings.phone}
             </dt>
             <dd className="flex flex-col items-start gap-1 text-neutral-950">
-              <TextLink href={telHref(clinic)} className={stackedLinkClass}>
-                {clinic.phoneLabel}
-              </TextLink>
+              {/* Text, not a link: the call button beside it already dials it. */}
+              <span>{clinic.phoneLabel}</span>
               <span className="text-neutral-600">{strings.phoneNote}</span>
             </dd>
           </div>
@@ -140,11 +135,14 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
       </Container>
 
       <Section
-        id="services"
         title={strings.services}
         intro={<p className="text-neutral-600">{strings.servicesLead}</p>}
       >
-        <ul className="grid grid-cols-1 gap-x-10 gap-y-8 sm:grid-cols-2">
+        {/* Safari drops the list role of a styled list without it. */}
+        <ul
+          role="list"
+          className="grid grid-cols-1 gap-x-10 gap-y-8 sm:grid-cols-2"
+        >
           {services.map(({ name, summary }) => (
             <li key={name.es} className="flex flex-col gap-1">
               <h3 className="font-display text-xl leading-snug font-semibold text-neutral-950">
@@ -156,7 +154,7 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
         </ul>
       </Section>
 
-      <Section id="exotics" title={strings.exotics}>
+      <Section title={strings.exotics}>
         <div className="flex flex-col items-start gap-6">
           <p className="max-w-prose text-pretty">{strings.exoticsText}</p>
           <ButtonLink
@@ -170,13 +168,13 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
         </div>
       </Section>
 
-      <Section id="directions" title={strings.directions}>
+      <Section title={strings.directions}>
         <div className="flex flex-col items-start gap-2">
           <p className="max-w-prose">
             {clinic.address}. {strings.directionsSign}
           </p>
           <TextLink href={clinic.mapUrl} className={stackedLinkClass}>
-            {strings.openMap}
+            {strings.seeOnMap}
           </TextLink>
         </div>
       </Section>

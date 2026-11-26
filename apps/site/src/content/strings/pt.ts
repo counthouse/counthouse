@@ -24,7 +24,6 @@ export const pt: Strings = {
   exoticsAction: "Consultar sobre meu pet",
   exoticsMessage: "Olá Ánima, quero consultar sobre meu pet exótico",
   directionsSign: "Procure a placa verde com o logo.",
-  openMap: "Abrir no Google Maps",
   headerNav: "Principal",
   footerNav: "Rodapé",
   language: "Idioma",

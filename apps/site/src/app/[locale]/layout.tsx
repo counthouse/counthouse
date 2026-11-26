@@ -37,14 +37,12 @@ export default async function LocaleLayout({
     <Document lang={htmlLang[locale]}>
       <a
         href="#contenido"
-        className={`sr-only z-30 items-center rounded-sm border border-neutral-400 bg-surface font-semibold focus:px-4 text-neutral-950 focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:inline-flex ${targetSize} ${focusRing}`}
+        className={`sr-only z-30 items-center rounded-sm border border-neutral-400 bg-surface font-semibold focus:px-4 text-neutral-950 focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:inline-flex ${targetSize} ${focusRing}`}
       >
         {strings.skipToContent}
       </a>
       <SiteHeader clinic={clinic} locale={locale} strings={strings} />
-      <main id="contenido" className="flex-1">
-        {children}
-      </main>
+      <main className="flex-1">{children}</main>
       <SiteFooter clinic={clinic} locale={locale} strings={strings} />
     </Document>
   );

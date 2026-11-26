@@ -22,7 +22,6 @@ export const es = {
   exoticsAction: "Consultar por mi mascota",
   exoticsMessage: "Hola Ánima, quiero consultar por mi mascota exótica",
   directionsSign: "Buscá el cartel verde con el logo.",
-  openMap: "Abrir en Google Maps",
   headerNav: "Principal",
   footerNav: "Pie de página",
   language: "Idioma",
