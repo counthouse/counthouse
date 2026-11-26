@@ -13,7 +13,8 @@
     "lint": "eslint --max-warnings 0",
     "typecheck": "next typegen && tsc --noEmit",
     "test:a11y": "playwright test",
-    "test:lighthouse": "node scripts/lighthouse.mts"
+    "test:lighthouse": "node scripts/lighthouse.mts",
+    "test:unit": "TZ=Asia/Tokyo node --test \"src/**/*.test.ts\""
   },
   "devDependencies": {
     "@axe-core/playwright": "4.14.0",

@@ -165,6 +165,7 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm run lint -w apps/site
       - run: npm run typecheck -w apps/site
+      - run: npm run test:unit -w apps/site
       - run: npm run build -w apps/site
       - name: Check lang, canonical and hreflang in the built pages
         run: npm run check:i18n -w apps/site
