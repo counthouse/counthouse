@@ -33,7 +33,8 @@ Built so far: `apps/api`, `apps/site`, `contract`, the realm file in `infra/keyc
   (44 px on touch) and overlaps no other; `npm run test:lighthouse -w apps/site` requires a median Lighthouse score of
   at least 0.95 per category on mobile over 3 runs. Both need `npm exec -w apps/site -- playwright install chromium`
   once. Each page exists in Spanish (`/es/`) and Portuguese (`/pt/`): text comes from `src/content/strings/`, and each
-  page's `generateMetadata` returns `alternates(locale, path)`.
+  page's `generateMetadata` returns `alternates(locale, path)` and a `description` no other page uses (`check:i18n`
+  fails otherwise; layouts set none, so a page cannot inherit one).
 - Other files: `npm ci` once, then `npm run format` (or `npm run format:check`) at the root, on the Node version
   in `.nvmrc`.
 - Claude Code hooks in `.claude/hooks`: `npm run test:hooks` at the root.

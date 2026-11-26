@@ -1,4 +1,5 @@
-// Checks `out/` after `next build`: `lang`, a self canonical, and two-way `hreflang` links.
+// Checks `out/` after `next build`: `lang`, a self canonical, two-way `hreflang` links, and a
+// description of its own on every page.
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -12,6 +13,7 @@ interface Page {
   path: string;
   lang: string | undefined;
   canonical: string | undefined;
+  description: string | undefined;
   alternates: Map<string, string>;
 }
 
@@ -23,6 +25,7 @@ for (const path of builtPages()) {
     path,
     lang: html.match(/<html[^>]*\slang="([^"]+)"/)?.[1],
     canonical: head.match(/<link rel="canonical" href="([^"]+)"/)?.[1],
+    description: head.match(/<meta name="description" content="([^"]*)"/)?.[1],
     alternates: new Map(
       [
         ...head.matchAll(
@@ -34,6 +37,7 @@ for (const path of builtPages()) {
 }
 
 const errors: string[] = [];
+const byDescription = new Map<string, string>();
 for (const [url, page] of pages) {
   const segment = page.path.split("/")[1] ?? "";
   const expectedLang = isLocale(segment) ? htmlLang[segment] : htmlLang.es;
@@ -41,6 +45,12 @@ for (const [url, page] of pages) {
     errors.push(
       `${page.path}: lang "${page.lang}", expected "${expectedLang}"`,
     );
+  if (!page.description) errors.push(`${page.path}: no description`);
+  else {
+    const other = byDescription.get(page.description);
+    if (other) errors.push(`${page.path}: same description as ${other}`);
+    byDescription.set(page.description, page.path);
+  }
   if (page.canonical !== url)
     errors.push(`${page.path}: canonical ${page.canonical}, expected ${url}`);
   if (![...page.alternates.values()].includes(url))
@@ -64,4 +74,6 @@ if (errors.length > 0) {
   console.error(errors.join("\n"));
   process.exit(1);
 }
-console.log(`Language links are consistent on ${pages.size} pages.`);
+console.log(
+  `Language links and descriptions are consistent on ${pages.size} pages.`,
+);

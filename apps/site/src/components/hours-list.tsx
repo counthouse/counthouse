@@ -13,7 +13,7 @@ export function HoursList({
   strings: Strings;
 }) {
   return (
-    <dl className="flex max-w-sm flex-col gap-3">
+    <dl data-hours className="flex max-w-sm flex-col gap-3">
       {groupDays(hours).map(({ from, to, ranges }) => (
         <div key={from} className="flex flex-wrap justify-between gap-x-4">
           <dt>{strings.dayGroup(from, to)}</dt>
