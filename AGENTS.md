@@ -1,7 +1,6 @@
 # Instructions for coding agents
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md) and, once they exist, the decision records in `docs/adr/` before changing
-anything.
+Read [CONTRIBUTING.md](CONTRIBUTING.md) and the decision records in `docs/adr/` before changing anything.
 
 ## Layout
 
@@ -36,7 +35,7 @@ Built so far: `apps/api`, `apps/site`, `contract`, the realm file in `infra/keyc
   (`/pt/`): text comes from `src/content/strings/`, and each page's `generateMetadata` returns
   `alternates(locale, path)`, and a `title` and a `description` no other page uses (`check:i18n` fails otherwise;
   layouts set no description, so a page cannot inherit one). Each page's `generateMetadata` also spreads
-  `shareMetadata(path, locale)`, and each page is listed in `app/sitemap.ts`: `check:search` fails on a page missing
+  `shareMetadata(path, locale)`, and each page is listed in `src/app/sitemap.ts`: `check:search` fails on a page missing
   from the sitemap, a sitemap entry whose language links differ from the page's, missing link preview tags, structured
   data on a language page that differs from `businessData()`, or a site URL that is not on `clinic.siteUrl` or not a
   built file.
