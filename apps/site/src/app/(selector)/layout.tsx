@@ -7,6 +7,7 @@ import { es } from "@/content/strings/es";
 import { pt } from "@/content/strings/pt";
 import { selectorAlternates } from "@/i18n/alternates";
 import { htmlLang } from "@/i18n/locales";
+import { shareMetadata } from "@/i18n/share";
 
 export const metadata: Metadata = {
   metadataBase: new URL(clinic.siteUrl),
@@ -14,6 +15,7 @@ export const metadata: Metadata = {
   // Both languages, like the page.
   description: `${es.description} ${pt.description}`,
   alternates: selectorAlternates,
+  ...shareMetadata("/"),
 };
 
 export default function SelectorLayout({ children }: { children: ReactNode }) {

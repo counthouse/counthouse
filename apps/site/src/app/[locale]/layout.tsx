@@ -2,6 +2,7 @@ import { focusRing, targetSize } from "@nicolassancho/ui";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
+import { BusinessData } from "@/components/business-data";
 import { Document } from "@/components/document";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -43,6 +44,7 @@ export default async function LocaleLayout({
       </a>
       <SiteHeader clinic={clinic} locale={locale} strings={strings} />
       <main className="flex-1">{children}</main>
+      <BusinessData homePath={`/${locale}/`} />
       <SiteFooter clinic={clinic} locale={locale} strings={strings} />
     </Document>
   );

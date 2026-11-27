@@ -4,6 +4,7 @@ export const pt: Strings = {
   description:
     "Clínica veterinária em Rivera, Uruguai. Fale conosco pelo WhatsApp, ligue ou veja como chegar.",
   homeTitle: "Veterinária em Rivera",
+  shareImageAlt: "Logo da Ánima e nome da clínica",
   whatsapp: "WhatsApp",
   whatsappMessage: "Olá Ánima, quero fazer uma consulta",
   call: (phoneLabel: string) => `Ligar para ${phoneLabel}`,

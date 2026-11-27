@@ -12,6 +12,7 @@ import { services } from "@/content/services";
 import { getStrings } from "@/content/strings";
 import { alternates } from "@/i18n/alternates";
 import { isLocale } from "@/i18n/locales";
+import { shareMetadata } from "@/i18n/share";
 
 export async function generateMetadata({
   params,
@@ -23,6 +24,7 @@ export async function generateMetadata({
     title: `${clinic.fullName} · ${strings.homeTitle}`,
     description: strings.description,
     alternates: alternates(locale, ""),
+    ...shareMetadata(`/${locale}/`, locale),
   };
 }
 

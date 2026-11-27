@@ -2,6 +2,7 @@ export const es = {
   description:
     "Clínica veterinaria en Rivera, Uruguay. Escribinos por WhatsApp, llamanos o mirá cómo llegar.",
   homeTitle: "Veterinaria en Rivera",
+  shareImageAlt: "Logo de Ánima y nombre de la clínica",
   whatsapp: "WhatsApp",
   whatsappMessage: "Hola Ánima, quiero hacer una consulta",
   call: (phoneLabel: string) => `Llamar al ${phoneLabel}`,

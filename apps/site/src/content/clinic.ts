@@ -18,11 +18,25 @@ export interface Clinic {
   phoneLabel: string;
   /** The same number as dialled inside Uruguay. */
   phoneLabelLocal: string;
+  /** The address in parts, for structured data (schema.org `PostalAddress`). */
+  postalAddress: {
+    streetAddress: string;
+    addressLocality: string;
+    /** ISO 3166-1 alpha-2. */
+    addressCountry: string;
+  };
+  /** The address as shown on the pages, built from `postalAddress`. */
   address: string;
   mapUrl: string;
   /** For canonical links. `.invalid` never resolves (RFC 2606) until the deploy sets the domain. */
   siteUrl: string;
 }
+
+const postalAddress: Clinic["postalAddress"] = {
+  streetAddress: "Av. Sarandí 711, sala 2",
+  addressLocality: "Rivera",
+  addressCountry: "UY",
+};
 
 export const clinic: Clinic = {
   name: "Ánima",
@@ -34,7 +48,8 @@ export const clinic: Clinic = {
   phone: "59898657295",
   phoneLabel: "+598 98 657 295",
   phoneLabelLocal: "098 657 295",
-  address: "Av. Sarandí 711, sala 2, Rivera, Uruguay",
+  postalAddress,
+  address: `${postalAddress.streetAddress}, ${postalAddress.addressLocality}, Uruguay`,
   mapUrl: "https://maps.app.goo.gl/dD1HNzFkP1Jk3vMM8",
   siteUrl: "https://anima.invalid",
 };
