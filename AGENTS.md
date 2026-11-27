@@ -26,15 +26,18 @@ Built so far: `apps/api`, `apps/site`, `contract`, the realm file in `infra/keyc
   applies Spotless formatting itself.
 - `apps/site`: `npm ci` once at the root, then `npm run lint -w apps/site`, `npm run typecheck -w apps/site`,
   `npm run test:unit -w apps/site` (Node's test runner on `src/**/*.test.ts`, in the `Asia/Tokyo` time zone so a test
-  that depends on the visitor's zone fails), `npm run build -w apps/site` and `npm run check:i18n -w apps/site` (reads
-  the built pages). The build is a static export written to `apps/site/out/`. After the build,
-  `npm run test:a11y -w apps/site` runs axe on every built page and the 404 page, in light and dark at 390 and 1280 px,
-  checks that each fits 320 px with text at 200%, and that every link and button outside a sentence is at least 24 px
-  (44 px on touch) and overlaps no other; `npm run test:lighthouse -w apps/site` requires a median Lighthouse score of
-  at least 0.95 per category on mobile over 3 runs. Both need `npm exec -w apps/site -- playwright install chromium`
-  once. Each page exists in Spanish (`/es/`) and Portuguese (`/pt/`): text comes from `src/content/strings/`, and each
-  page's `generateMetadata` returns `alternates(locale, path)` and a `description` no other page uses (`check:i18n`
-  fails otherwise; layouts set none, so a page cannot inherit one).
+  that depends on the visitor's zone fails), `npm run build -w apps/site`, `npm run check:i18n -w apps/site` and
+  `npm run check:search -w apps/site` (both read the built pages). The build is a static export written to
+  `apps/site/out/`. After the build, `npm run test:a11y -w apps/site` runs axe on every built page and the 404 page, in
+  light and dark at 390 and 1280 px, checks that each fits 320 px with text at 200%, and that every link and button
+  outside a sentence is at least 24 px (44 px on touch) and overlaps no other; `npm run test:lighthouse -w apps/site`
+  requires a median Lighthouse score of at least 0.95 per category on mobile over 3 runs. Both need
+  `npm exec -w apps/site -- playwright install chromium` once. Each page exists in Spanish (`/es/`) and Portuguese
+  (`/pt/`): text comes from `src/content/strings/`, and each page's `generateMetadata` returns
+  `alternates(locale, path)`, and a `title` and a `description` no other page uses (`check:i18n` fails otherwise;
+  layouts set no description, so a page cannot inherit one). Each page is listed in `app/sitemap.ts`: `check:search`
+  fails on a page missing from the sitemap, a sitemap entry whose language links differ from the page's, or a site URL
+  that is not on `clinic.siteUrl` or not a built file.
 - Other files: `npm ci` once, then `npm run format` (or `npm run format:check`) at the root, on the Node version
   in `.nvmrc`.
 - Claude Code hooks in `.claude/hooks`: `npm run test:hooks` at the root.

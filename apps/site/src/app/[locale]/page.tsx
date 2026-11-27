@@ -18,8 +18,10 @@ export async function generateMetadata({
 }: PageProps<"/[locale]">): Promise<Metadata> {
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
+  const strings = getStrings(locale);
   return {
-    description: getStrings(locale).description,
+    title: `${clinic.fullName} · ${strings.homeTitle}`,
+    description: strings.description,
     alternates: alternates(locale, ""),
   };
 }

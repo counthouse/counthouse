@@ -10,6 +10,7 @@
     "dev": "next dev",
     "build": "next build",
     "check:i18n": "node scripts/check-i18n.mts",
+    "check:search": "node scripts/check-search.mts",
     "lint": "eslint --max-warnings 0",
     "typecheck": "next typegen && tsc --noEmit",
     "test:a11y": "playwright test",
