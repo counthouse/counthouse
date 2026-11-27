@@ -1,9 +1,12 @@
-// Checks `out/` after `next build`: robots.txt, and a sitemap that lists every built page with the
-// same language links as the page.
+// Checks `out/` after `next build`: robots.txt, a sitemap that lists every built page with the
+// same language links as the page, link preview tags, the preview image, and the structured data.
 import { existsSync, readFileSync, statSync } from "node:fs";
+import { isDeepStrictEqual } from "node:util";
 import { join } from "node:path";
 
 import { clinic } from "../src/content/clinic.ts";
+import { businessData } from "../src/lib/business-data.ts";
+import { shareImage } from "../src/lib/share-image.ts";
 import { absoluteUrl } from "../src/lib/site-url.ts";
 import { builtPages, out } from "./built-pages.mts";
 
@@ -71,10 +74,15 @@ for (const [loc, links] of sitemap) {
     checkSiteUrl(`sitemap ${loc} hreflang ${lang}`, href);
 }
 
+const ogLocale: Record<string, string> = { es: "es_UY", "pt-BR": "pt_BR" };
 const pages = builtPages();
 for (const path of pages) {
   const html = read(join(path, "index.html"));
   const head = html.slice(0, html.indexOf("</head>"));
+  const meta = (key: string) =>
+    head.match(
+      new RegExp(`<meta (?:property|name)="${key}" content="([^"]*)"`),
+    )?.[1];
   const url = absoluteUrl(path);
   const canonical = head.match(/<link rel="canonical" href="([^"]+)"/)?.[1];
   checkSiteUrl(`${path} canonical`, canonical);
@@ -90,6 +98,52 @@ for (const path of pages) {
     errors.push(
       `${path}: sitemap.xml language links differ from the page's hreflang links`,
     );
+
+  if (meta("og:url") !== canonical)
+    errors.push(`${path}: og:url ${meta("og:url")}, canonical ${canonical}`);
+  for (const key of ["og:title", "og:description", "og:image:alt"])
+    if (!meta(key)) errors.push(`${path}: no ${key}`);
+  const lang = html.match(/<html[^>]*\slang="([^"]+)"/)?.[1] ?? "";
+  if (meta("og:locale") !== ogLocale[lang])
+    errors.push(
+      `${path}: og:locale ${meta("og:locale")} for lang "${lang}", expected ${ogLocale[lang]}`,
+    );
+  checkSiteUrl(`${path} og:image`, meta("og:image"));
+  if (
+    meta("og:image") !== absoluteUrl(shareImage.url) ||
+    meta("og:image:width") !== String(shareImage.width) ||
+    meta("og:image:height") !== String(shareImage.height) ||
+    meta("og:image:type") !== shareImage.type
+  )
+    errors.push(
+      `${path}: og:image is not ${shareImage.url} with its size and type`,
+    );
+  if (meta("twitter:card") !== "summary_large_image")
+    errors.push(`${path}: twitter:card ${meta("twitter:card")}`);
+
+  // Language pages describe the clinic; the selector does not.
+  const scripts = [
+    ...html.matchAll(/<script type="application\/ld\+json">([^<]*)<\/script>/g),
+  ].map((m) => m[1]!);
+  const segment = path.split("/")[1] ?? "";
+  if (segment === "") continue;
+  if (scripts.length !== 1) {
+    errors.push(`${path}: ${scripts.length} JSON-LD scripts, expected 1`);
+    continue;
+  }
+  let data: ReturnType<typeof businessData>;
+  try {
+    data = JSON.parse(scripts[0]!);
+  } catch {
+    errors.push(`${path}: JSON-LD does not parse`);
+    continue;
+  }
+  if (!isDeepStrictEqual(data, businessData(`/${segment}/`)))
+    errors.push(
+      `${path}: JSON-LD differs from businessData("/${segment}/"):\n${JSON.stringify(data)}`,
+    );
+  for (const key of ["url", "logo", "image"] as const)
+    checkSiteUrl(`${path} JSON-LD ${key}`, data[key]);
 }
 const sitemapEntries = read("sitemap.xml").match(/<url>/g)?.length ?? 0;
 if (sitemapEntries !== sitemap.size)
@@ -100,10 +154,26 @@ for (const loc of sitemap.keys())
   if (!pages.includes(new URL(loc).pathname))
     errors.push(`sitemap.xml: ${loc} is not a built page`);
 
+// A PNG starts with an 8-byte signature, then the IHDR chunk: width and height at bytes 16-23.
+const png = existsSync(join(out, shareImage.url))
+  ? readFileSync(join(out, shareImage.url))
+  : Buffer.alloc(0);
+if (
+  png.length < 24 ||
+  png.toString("latin1", 1, 4) !== "PNG" ||
+  png.readUInt32BE(16) !== shareImage.width ||
+  png.readUInt32BE(20) !== shareImage.height
+)
+  errors.push(
+    `${shareImage.url}: not a ${shareImage.width}×${shareImage.height} PNG`,
+  );
+
 if (pages.length === 0)
   errors.push(`no pages found in ${out}: run the build first`);
 if (errors.length > 0) {
   console.error(errors.join("\n"));
   process.exit(1);
 }
-console.log(`Sitemap and robots.txt are consistent on ${pages.length} pages.`);
+console.log(
+  `Sitemap, robots.txt, link previews and structured data are consistent on ${pages.length} pages.`,
+);

@@ -169,7 +169,7 @@ jobs:
       - run: npm run build -w apps/site
       - name: Check lang, canonical and hreflang in the built pages
         run: npm run check:i18n -w apps/site
-      - name: Check the sitemap and robots.txt
+      - name: Check the sitemap, robots.txt, link previews and structured data
         run: npm run check:search -w apps/site
       # The build passes even when Tailwind does not scan the design system
       # (a wrong `@source` path), so check that one of its classes was
